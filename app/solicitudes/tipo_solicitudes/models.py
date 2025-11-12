@@ -10,7 +10,7 @@ RESPOSABLES = [
 class TipoSolicitud(models.Model):
     nombre = models.CharField(max_length=150)
     descripcion = models.CharField(max_length=350)
-    responsable = models.CharField(max_length=1, choices=RESPOSABLES)
+    responsable = models.CharField(max_length=1, choices=RESPOSABLES, default='1')
 
 
     def __str__(self):
@@ -85,6 +85,7 @@ ESTATUS = [
     ('4', 'Cancelada'),
 ]
 class SeguimientoSolicitud(models.Model):
+    solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE, related_name='seguimientos')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     observaciones = models.TextField(blank=True)
     solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE, related_name='seguimientos')

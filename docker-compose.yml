@@ -11,8 +11,14 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ./app:/app
-
+      - ./app:/app 
+    working_dir: /app
+    command: >
+      sh -c "
+            cd /app/solicitudes &&
+            . /env/bin/activate &&
+            python3 manage.py migrate &&
+            python3 manage.py runserver 0.0.0.0:8000"
     environment:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
