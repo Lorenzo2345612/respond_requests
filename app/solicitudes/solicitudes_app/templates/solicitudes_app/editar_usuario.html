@@ -1,0 +1,185 @@
+{% load static %}
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Editar Usuario - Sistema de Solicitudes UAZ</title>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Nunito.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/fontawesome-all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bss-overrides.css' %}">
+</head>
+<body id="page-top">
+    <div id="wrapper">
+        <nav class="navbar align-items-start p-0 sidebar sidebar-dark accordion bg-gradient-primary navbar-dark">
+            <div class="container-fluid d-flex flex-column p-0">
+                <a class="navbar-brand d-flex justify-content-center align-items-center m-0 sidebar-brand" href="{% url 'bienvenida' %}">
+                    <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-laugh-wink"></i></div>
+                    <div class="mx-3 sidebar-brand-text"><span>Sistema Solicitudes UAZ</span></div>
+                </a>
+                <hr class="my-0 sidebar-divider">
+                <ul class="navbar-nav text-light" id="accordionSidebar">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'bienvenida' %}"><i class="fas fa-home"></i><span>Inicio</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'solicitudes_app:perfil' %}"><i class="fas fa-user"></i><span>Mi Perfil</span></a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'solicitudes_app:lista_usuarios' %}"><i class="fas fa-users"></i><span>Gestionar Usuarios</span></a></li>
+                    {% if user.puede_ver_dashboard %}
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
+                    {% endif %}
+                </ul>
+                <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
+            </div>
+        </nav>
+        
+        <div class="d-flex flex-column" id="content-wrapper">
+            <div id="content">
+                <nav class="navbar navbar-expand bg-white shadow mb-4 topbar">
+                    <div class="container-fluid">
+                        <button class="btn btn-link d-md-none me-3 rounded-circle" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
+                        <ul class="navbar-nav flex-nowrap ms-auto">
+                            <div class="d-none d-sm-block topbar-divider"></div>
+                            <li class="nav-item dropdown no-arrow">
+                                <div class="nav-item dropdown no-arrow">
+                                    <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#">
+                                        <span class="d-none d-lg-inline me-2 text-gray-600 small">{{ user.get_full_name }}</span>
+                                        <img class="border rounded-circle img-profile" src="{% static 'img/avatars/avatar1.jpeg' %}">
+                                    </a>
+                                    <div class="dropdown-menu shadow dropdown-menu-end animated--grow-in">
+                                        <a class="dropdown-item" href="{% url 'solicitudes_app:perfil' %}"><i class="fas fa-user me-2 fa-sm fa-fw text-gray-400"></i>&nbsp;Perfil</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="{% url 'solicitudes_app:logout' %}"><i class="fas fa-sign-out-alt me-2 fa-sm fa-fw text-gray-400"></i>&nbsp;Cerrar Sesión</a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <div class="container-fluid">
+                    <h3 class="text-dark mb-4">Editar Usuario: {{ usuario.username }}</h3>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="card shadow mb-3">
+                                <div class="card-header py-3">
+                                    <p class="text-primary m-0 fw-bold">Información del Usuario</p>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label" for="id_username"><strong>Nombre de usuario</strong></label>
+                                            {{ form.username }}
+                                            {% if form.username.errors %}
+                                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="id_first_name"><strong>Nombre(s)</strong></label>
+                                                    {{ form.first_name }}
+                                                    {% if form.first_name.errors %}
+                                                        <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="id_last_name"><strong>Apellidos</strong></label>
+                                                    {{ form.last_name }}
+                                                    {% if form.last_name.errors %}
+                                                        <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label" for="id_email"><strong>Correo Electrónico</strong></label>
+                                            {{ form.email }}
+                                            {% if form.email.errors %}
+                                                <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label" for="id_rol"><strong>Rol</strong></label>
+                                            {{ form.rol }}
+                                            {% if form.rol.errors %}
+                                                <div class="text-danger small mt-1">{{ form.rol.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label" for="id_telefono"><strong>Teléfono</strong></label>
+                                            {{ form.telefono }}
+                                            {% if form.telefono.errors %}
+                                                <div class="text-danger small mt-1">{{ form.telefono.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label" for="id_matricula"><strong>Matrícula</strong></label>
+                                            {{ form.matricula }}
+                                            <small class="form-text text-muted">Solo para alumnos</small>
+                                            {% if form.matricula.errors %}
+                                                <div class="text-danger small mt-1">{{ form.matricula.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label" for="id_area"><strong>Área</strong></label>
+                                            {{ form.area }}
+                                            <small class="form-text text-muted">Para personal administrativo</small>
+                                            {% if form.area.errors %}
+                                                <div class="text-danger small mt-1">{{ form.area.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                {{ form.is_active }}
+                                                <label class="form-check-label" for="id_is_active"><strong>Usuario Activo</strong></label>
+                                            </div>
+                                            {% if form.is_active.errors %}
+                                                <div class="text-danger small mt-1">{{ form.is_active.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <button class="btn btn-primary" type="submit">Guardar Cambios</button>
+                                            <a href="{% url 'solicitudes_app:lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="bg-white sticky-footer">
+                <div class="container my-auto">
+                    <div class="text-center my-auto copyright"><span>Copyright © Sistema de Solicitudes UAZ 2025</span></div>
+                </div>
+            </footer>
+        </div>
+        <a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+    </div>
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/bs-init.js' %}"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
+</body>
+</html>

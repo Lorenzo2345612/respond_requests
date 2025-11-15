@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 RESPOSABLES = [
     ('1', 'Control escolar'),
@@ -50,7 +50,7 @@ class CampoFormulario(models.Model):
         return f"{self.etiqueta} ({self.tipo})"
 
 class Solicitud(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     tipo_solicitud = models.ForeignKey(TipoSolicitud, on_delete=models.CASCADE)
     folio = models.CharField(max_length=20, unique=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)

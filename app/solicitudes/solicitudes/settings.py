@@ -117,3 +117,11 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom User Model
+AUTH_USER_MODEL = 'solicitudes_app.Usuario'
+
+# Login/Logout URLs
+LOGIN_URL = 'solicitudes_app:login'
+LOGIN_REDIRECT_URL = 'bienvenida'
+LOGOUT_REDIRECT_URL = 'solicitudes_app:login'

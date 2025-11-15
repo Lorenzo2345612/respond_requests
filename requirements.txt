@@ -3,3 +3,5 @@ mysqlclient
 pillow
 reportlab
 matplotlib
+behave
+selenium

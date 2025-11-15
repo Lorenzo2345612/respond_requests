@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Login - Sistema de Solicitudes UAZ</title>
+    <meta name="description" content="Sistema de gestión de solicitudes">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Nunito.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/fontawesome-all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bss-overrides.css' %}">
+</head>
+<body class="bg-gradient-primary">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-9 col-lg-12 col-xl-10">
+                <div class="card shadow-lg my-5 o-hidden border-0">
+                    <div class="card-body p-0">
+                        <div class="row">
+                            <div class="col-lg-6 d-none d-lg-flex">
+                                <div class="flex-grow-1 bg-login-image" style="background-image: url('{% static 'img/dogs/image3.jpeg' %}');"></div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <div class="text-center">
+                                        <h4 class="text-dark mb-4">¡Bienvenido de vuelta!</h4>
+                                    </div>
+                                    
+                                    {% if messages %}
+                                        {% for message in messages %}
+                                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                                {{ message }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    
+                                    <form class="user" method="post">
+                                        {% csrf_token %}
+                                        
+                                        <div class="mb-3">
+                                            {{ form.username }}
+                                            {% if form.username.errors %}
+                                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            {{ form.password }}
+                                            {% if form.password.errors %}
+                                                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="custom-checkbox small">
+                                                <div class="form-check">
+                                                    {{ form.remember_me }}
+                                                    <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">Recordarme</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <button class="btn btn-primary d-block w-100 btn-user" type="submit">Iniciar Sesión</button>
+                                        <hr>
+                                    </form>
+                                    
+                                    <div class="text-center"><a class="small" href="#">¿Olvidaste tu contraseña?</a></div>
+                                    <div class="text-center"><a class="small" href="{% url 'solicitudes_app:registro' %}">¡Crea una cuenta!</a></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/bs-init.js' %}"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
+</body>
+</html>
