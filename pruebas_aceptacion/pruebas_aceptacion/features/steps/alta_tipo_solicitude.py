@@ -9,7 +9,6 @@ def step_impl(context):
 
 @given(u'seleccion el menú Tipo de solicitudes')
 def step_impl(context):
-    # Navegar directamente al formulario de agregar
     context.driver.get(f"{context.url}/tipo-solicitud/")
     time.sleep(1)
 
@@ -21,28 +20,25 @@ def step_impl(context, nombre, descripcion):
     time.sleep(1)
 
 
+#===WHEN
 
 @when(u'presiono el botón Agregar')
 def step_impl(context):
-    # Buscar específicamente el botón de tipo submit
     boton = context.driver.find_element(By.XPATH, "//button[@type='submit']")
     boton.click()
-    # Esperar a que se complete la redirección
     time.sleep(2)
 
 
+#===THEN
 
 @then(u'puedo ver el tipo "{nombre}" en la lista de tipos de solicitudes.')
 def step_impl(context, nombre):
-    # Esperar un momento para que se complete la redirección
     time.sleep(1)
     
-    # Navegar a la lista si no estamos ya ahí
     if '/tipo-solicitud/lista/' not in context.driver.current_url:
         context.driver.get(f"{context.url}/tipo-solicitud/lista/")
         time.sleep(1)
     else:
-        # Si ya estamos en la lista, recargar para asegurar datos actualizados
         context.driver.refresh()
         time.sleep(1)
     

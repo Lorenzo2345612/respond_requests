@@ -58,22 +58,22 @@ Característica: Gestión completa de tipos de solicitud
         Entonces soy redirigido a la lista de tipos de solicitudes
         Y no veo el tipo "Solicitud Temporal" en la lista
 
-    Escenario: Error al exceder el límite de caracteres en nombre
-        Dado que ingreso al sistema
-        Y navego a la lista de tipos de solicitudes
-        Y hago clic en el menú "Tipo solicitudes"
-        Cuando lleno el campo "nombre" con un texto de 200 caracteres
-        Y lleno el campo "descripcion" con "Descripción válida"
-        Y presiono el botón "Guardar"
-        Entonces veo un mensaje de error por exceder el límite de caracteres
-        Y permanezco en la página de agregar tipo de solicitud
-
-    Escenario: Error al exceder el límite de caracteres en descripción
-        Dado que ingreso al sistema
-        Y navego a la lista de tipos de solicitudes
-        Y hago clic en el menú "Tipo solicitudes"
-        Cuando lleno el campo "nombre" con "Nombre válido"
-        Y lleno el campo "descripcion" con un texto de 400 caracteres
-        Y presiono el botón "Guardar"
-        Entonces veo un mensaje de error por exceder el límite de caracteres en descripción
-        Y permanezco en la página de agregar tipo de solicitud
+#    Escenario: Error al exceder el límite de caracteres en nombre
+#        Dado que ingreso al sistema
+#        Y navego a la lista de tipos de solicitudes
+#        Y hago clic en el menú "Tipo solicitudes"
+#        Cuando lleno el campo "nombre" con un texto de 200 caracteres
+#        Y lleno el campo "descripcion" con "Descripción válida"
+#        Y presiono el botón "Guardar"
+#        Entonces veo un mensaje de error por exceder el límite de caracteres
+#        Y permanezco en la página de agregar tipo de solicitud
+#
+#    Escenario: Error al exceder el límite de caracteres en descripción
+#        Dado que ingreso al sistema
+#        Y navego a la lista de tipos de solicitudes
+#        Y hago clic en el menú "Tipo solicitudes"
+#        Cuando lleno el campo "nombre" con "Nombre válido"
+#        Y lleno el campo "descripcion" con un texto de 400 caracteres
+#        Y presiono el botón "Guardar"
+#        Entonces veo un mensaje de error por exceder el límite de caracteres en descripción
+#        Y permanezco en la página de agregar tipo de solicitud

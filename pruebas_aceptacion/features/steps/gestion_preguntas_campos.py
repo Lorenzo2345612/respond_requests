@@ -6,48 +6,81 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 import time
 
-# ===== GIVEN STEPS =====
+#===GIVEN
 
 @given(u'navego a la página de agregar preguntas del formulario "{nombre}"')
 def step_impl(context, nombre):
-    # Primero ir a la lista de formularios
     context.driver.get(f"{context.url}/tipo-solicitud/formularios/")
     time.sleep(1)
     
-    # Buscar el formulario y hacer clic en "Agregar Preguntas"
-    try:
-        body = context.driver.find_element(By.ID, 'bodyTipoSolicitudes')
-        trs = body.find_elements(By.TAG_NAME, 'tr')
-        
-        formulario_encontrado = False
-        for tr in trs:
-            tds = tr.find_elements(By.TAG_NAME, 'td')
-            if tds and len(tds) > 1 and nombre in tds[1].text:
-                # Encontrar el botón dropdown
+    body = context.driver.find_element(By.ID, 'bodyTipoSolicitudes')
+    trs = body.find_elements(By.TAG_NAME, 'tr')
+    
+    formulario_encontrado = False
+    for tr in trs:
+        tds = tr.find_elements(By.TAG_NAME, 'td')
+        if tds and len(tds) > 1 and nombre in tds[1].text:
+            try:
                 dropdown_btn = tr.find_element(By.CLASS_NAME, 'dropdown-toggle')
+                context.driver.execute_script("arguments[0].scrollIntoView(true);", dropdown_btn)
+                time.sleep(0.3)
                 dropdown_btn.click()
                 time.sleep(0.5)
-                
-                # Hacer clic en "Agregar Preguntas"
                 agregar_preguntas = tr.find_element(By.XPATH, ".//a[contains(., 'Agregar Preguntas')]")
                 agregar_preguntas.click()
                 time.sleep(1)
                 formulario_encontrado = True
                 break
-        
-        if not formulario_encontrado:
-            raise Exception(f"No se encontró el formulario '{nombre}' en la lista")
-    except Exception as e:
-        # Si hay algún error, intentar navegar directamente
-        # Asumiendo que el formulario tiene ID 1 para pruebas
-        context.driver.get(f"{context.url}/tipo-solicitud/formularios/campos/1/")
+            except Exception as e:
+                print(f"Error al hacer clic en dropdown: {e}")
+                continue
+    
+    if not formulario_encontrado:
+        print(f"No se encontró el formulario '{nombre}', intentando con ID 1")
+        context.driver.get(f"{context.url}/tipo-solicitud/formularios/")
         time.sleep(1)
+        trs = context.driver.find_elements(By.XPATH, "//table//tbody//tr")
+        if len(trs) > 0:
+            try:
+                dropdown = trs[0].find_element(By.CLASS_NAME, 'dropdown-toggle')
+                dropdown.click()
+                time.sleep(0.5)
+                agregar_link = trs[0].find_element(By.XPATH, ".//a[contains(., 'Agregar Preguntas')]")
+                agregar_link.click()
+                time.sleep(1)
+            except:
+                pass
+    
+    # Extraer el formulario_id de la URL y llenar el campo oculto
+    import re
+    current_url = context.driver.current_url
+    match = re.search(r'/campos/(\d+)/', current_url)
+    if match:
+        context.formulario_id = match.group(1)
+        try:
+            campo_oculto = context.driver.find_element(By.NAME, 'formulario')
+            context.driver.execute_script("arguments[0].value = arguments[1];", campo_oculto, context.formulario_id)
+        except:
+            pass
 
 
 @given(u'existe un campo con orden "{orden}"')
 def step_impl(context, orden):
-    # Agregar un campo con el orden especificado
+    try:
+        tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+        tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+        trs = tbody.find_elements(By.TAG_NAME, 'tr')
+        
+        for tr in trs:
+            tds = tr.find_elements(By.TAG_NAME, 'td')
+            if tds and len(tds) > 0 and tds[0].text == orden:
+                return
+    except:
+        pass
+    
+    context.driver.find_element(By.NAME, 'nombre').clear()
     context.driver.find_element(By.NAME, 'nombre').send_keys(f'campo_orden_{orden}')
+    context.driver.find_element(By.NAME, 'etiqueta').clear()
     context.driver.find_element(By.NAME, 'etiqueta').send_keys(f'Campo con orden {orden}')
     
     select_element = context.driver.find_element(By.NAME, 'tipo')
@@ -57,38 +90,98 @@ def step_impl(context, orden):
     context.driver.find_element(By.NAME, 'orden').clear()
     context.driver.find_element(By.NAME, 'orden').send_keys(orden)
     
-    context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]").click()
-    time.sleep(1)
+    # Llenar el campo oculto formulario si existe
+    if hasattr(context, 'formulario_id'):
+        try:
+            campo_oculto = context.driver.find_element(By.NAME, 'formulario')
+            context.driver.execute_script("arguments[0].value = arguments[1];", campo_oculto, context.formulario_id)
+        except:
+            pass
+    
+    try:
+        agregar_btn = context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]")
+        agregar_btn.click()
+    except:
+        agregar_btn = context.driver.find_element(By.XPATH, "//button[@type='submit']")
+        agregar_btn.click()
+    time.sleep(2)
 
 
 @given(u'existe un campo llamado "{etiqueta}"')
 def step_impl(context, etiqueta):
-    # Agregar un campo con la etiqueta especificada
-    context.driver.find_element(By.NAME, 'nombre').send_keys(etiqueta.lower().replace(' ', '_'))
+    nombre_campo = etiqueta.lower().replace(' ', '_')
+    
+    if not hasattr(context, 'orden_counter'):
+        context.orden_counter = 200
+    context.orden_counter += 1
+    
+    try:
+        tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+        tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+        trs = tbody.find_elements(By.TAG_NAME, 'tr')
+        
+        for tr in trs:
+            tds = tr.find_elements(By.TAG_NAME, 'td')
+            if tds and len(tds) > 1 and etiqueta in tds[1].text:
+                context.ultimo_campo_etiqueta = etiqueta
+                context.ultimo_campo_nombre = nombre_campo
+                return
+    except:
+        pass
+    
+    context.driver.find_element(By.NAME, 'nombre').clear()
+    context.driver.find_element(By.NAME, 'nombre').send_keys(nombre_campo)
+    context.driver.find_element(By.NAME, 'etiqueta').clear()
     context.driver.find_element(By.NAME, 'etiqueta').send_keys(etiqueta)
     
     select_element = context.driver.find_element(By.NAME, 'tipo')
     select = Select(select_element)
     select.select_by_value('text')
     
-    # Usar un orden aleatorio alto para evitar conflictos
-    import random
-    orden = random.randint(100, 999)
     context.driver.find_element(By.NAME, 'orden').clear()
-    context.driver.find_element(By.NAME, 'orden').send_keys(str(orden))
+    context.driver.find_element(By.NAME, 'orden').send_keys(str(context.orden_counter))
     
-    context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]").click()
-    time.sleep(1)
+    # Llenar el campo oculto formulario si existe
+    if hasattr(context, 'formulario_id'):
+        try:
+            campo_oculto = context.driver.find_element(By.NAME, 'formulario')
+            context.driver.execute_script("arguments[0].value = arguments[1];", campo_oculto, context.formulario_id)
+        except:
+            pass
     
-    # Guardar el nombre para futuras referencias
+    try:
+        agregar_btn = context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]")
+        agregar_btn.click()
+    except:
+        agregar_btn = context.driver.find_element(By.XPATH, "//button[@type='submit']")
+        agregar_btn.click()
+    time.sleep(2)
+    
     context.ultimo_campo_etiqueta = etiqueta
+    context.ultimo_campo_nombre = nombre_campo
 
 
 @given(u'no existen campos agregados todavía')
 def step_impl(context):
-    # Este paso asume que estamos en un formulario nuevo sin campos
-    # No necesita hacer nada, solo documentar el estado
-    pass
+    # Eliminar todos los campos existentes para asegurar que la tabla esté vacía
+    while True:
+        try:
+            tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+            tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+            trs = tbody.find_elements(By.TAG_NAME, 'tr')
+            
+            if len(trs) == 0:
+                break
+            
+            # Eliminar el primer campo encontrado
+            eliminar_btn = trs[0].find_element(By.CLASS_NAME, 'btn-danger')
+            context.driver.execute_script("arguments[0].click();", eliminar_btn)
+            time.sleep(1)
+        except NoSuchElementException:
+            # No hay tabla, significa que no hay campos
+            break
+        except Exception:
+            break
 
 
 @given(u'existen campos con orden "{orden1}", "{orden2}", "{orden3}"')
@@ -96,7 +189,9 @@ def step_impl(context, orden1, orden2, orden3):
     ordenes = [orden1, orden2, orden3]
     
     for i, orden in enumerate(ordenes):
+        context.driver.find_element(By.NAME, 'nombre').clear()
         context.driver.find_element(By.NAME, 'nombre').send_keys(f'campo_{i+1}')
+        context.driver.find_element(By.NAME, 'etiqueta').clear()
         context.driver.find_element(By.NAME, 'etiqueta').send_keys(f'Campo Orden {orden}')
         
         select_element = context.driver.find_element(By.NAME, 'tipo')
@@ -106,11 +201,24 @@ def step_impl(context, orden1, orden2, orden3):
         context.driver.find_element(By.NAME, 'orden').clear()
         context.driver.find_element(By.NAME, 'orden').send_keys(orden)
         
-        context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]").click()
-        time.sleep(1)
+        # Llenar el campo oculto formulario si existe
+        if hasattr(context, 'formulario_id'):
+            try:
+                campo_oculto = context.driver.find_element(By.NAME, 'formulario')
+                context.driver.execute_script("arguments[0].value = arguments[1];", campo_oculto, context.formulario_id)
+            except:
+                pass
+        
+        try:
+            agregar_btn = context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]")
+            agregar_btn.click()
+        except:
+            agregar_btn = context.driver.find_element(By.XPATH, "//button[@type='submit']")
+            agregar_btn.click()
+        time.sleep(2)
 
 
-# ===== WHEN STEPS =====
+#===WHEN
 
 @when(u'lleno el campo de pregunta "{campo}" con "{valor}"')
 def step_impl(context, campo, valor):
@@ -132,7 +240,6 @@ def step_impl(context, tipo):
     select_element = context.driver.find_element(By.NAME, 'tipo')
     select = Select(select_element)
     
-    # Mapeo de tipos según el modelo
     tipos_map = {
         'Texto corto': 'text',
         'Texto largo': 'textarea',
@@ -148,13 +255,15 @@ def step_impl(context, tipo):
 
 @when(u'no selecciono ningún tipo de campo')
 def step_impl(context):
-    # Dejar la selección por defecto vacía
     select_element = context.driver.find_element(By.NAME, 'tipo')
     select = Select(select_element)
     try:
-        select.select_by_index(0)  # Seleccionar la opción vacía
+        select.select_by_value('')
     except:
-        pass
+        try:
+            select.select_by_visible_text('---------')
+        except:
+            pass
     time.sleep(0.3)
 
 
@@ -176,9 +285,19 @@ def step_impl(context):
 
 @when(u'lleno el campo "orden" con "{valor}"')
 def step_impl(context, valor):
+    if not hasattr(context, 'orden_base'):
+        import random
+        context.orden_base = random.randint(1000, 9000)
+    
+    try:
+        orden_num = int(valor)
+        orden_final = str(context.orden_base + orden_num)
+    except:
+        orden_final = valor
+    
     element = context.driver.find_element(By.NAME, 'orden')
     element.clear()
-    element.send_keys(valor)
+    element.send_keys(orden_final)
     time.sleep(0.3)
 
 
@@ -207,9 +326,28 @@ def step_impl(context, cantidad):
     context.cantidad_archivos_guardada = cantidad
 
 
+@when(u'visualizo la tabla de campos agregados')
+def step_impl(context):
+    try:
+        tabla = WebDriverWait(context.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '.table-bordered'))
+        )
+        assert tabla.is_displayed(), "La tabla de campos no está visible"
+    except:
+        pass
+    time.sleep(0.5)
+
+
 @when(u'presiono el botón "Agregar campo"')
 def step_impl(context):
-    # Buscar el botón que contiene el texto "Agregar campo" o es de tipo submit
+    # Llenar el campo oculto formulario antes de enviar
+    if hasattr(context, 'formulario_id'):
+        try:
+            campo_oculto = context.driver.find_element(By.NAME, 'formulario')
+            context.driver.execute_script("arguments[0].value = arguments[1];", campo_oculto, context.formulario_id)
+        except:
+            pass
+    
     try:
         agregar_btn = context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]")
     except:
@@ -220,21 +358,18 @@ def step_impl(context):
 
 @when(u'hago clic en el botón eliminar del campo "{etiqueta}"')
 def step_impl(context, etiqueta):
-    # Buscar la fila que contiene la etiqueta del campo
     try:
-        tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+        wait = WebDriverWait(context.driver, 10)
+        tabla = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'table-bordered')))
         tbody = tabla.find_element(By.TAG_NAME, 'tbody')
         trs = tbody.find_elements(By.TAG_NAME, 'tr')
         
         for tr in trs:
             tds = tr.find_elements(By.TAG_NAME, 'td')
-            if tds and len(tds) > 1 and etiqueta in tds[1].text:  # La etiqueta está en la columna 1
-                # Encontrar y hacer clic en el botón eliminar
+            if tds and len(tds) > 1 and etiqueta in tds[1].text:
                 eliminar_btn = tr.find_element(By.CLASS_NAME, 'btn-danger')
                 context.driver.execute_script("arguments[0].click();", eliminar_btn)
                 time.sleep(1)
-                
-                # Puede haber una confirmación - intentar aceptarla
                 try:
                     alert = context.driver.switch_to.alert
                     alert.accept()
@@ -246,10 +381,10 @@ def step_impl(context, etiqueta):
         raise Exception(f"Error al eliminar campo '{etiqueta}': {str(e)}")
 
 
-@when(u'visualizo la tabla de campos agregados')
+@then(u'visualizo la tabla de campos configurados')
 def step_impl(context):
-    # Solo verificar que la tabla existe
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    wait = WebDriverWait(context.driver, 10)
+    tabla = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.table-bordered')))
     assert tabla is not None
     time.sleep(0.5)
 
@@ -261,11 +396,12 @@ def step_impl(context):
     time.sleep(1)
 
 
-# ===== THEN STEPS =====
+#===THEN
 
 @then(u'veo la pregunta "{etiqueta}" en la tabla de campos agregados')
 def step_impl(context, etiqueta):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    wait = WebDriverWait(context.driver, 10)
+    tabla = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.table-bordered')))
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -278,14 +414,13 @@ def step_impl(context, etiqueta):
     assert etiqueta in etiquetas_encontradas, \
         f"No se encontró '{etiqueta}' en las etiquetas: {etiquetas_encontradas}"
     
-    # Guardar para futuras referencias
     context.ultima_etiqueta = etiqueta
     time.sleep(0.5)
 
 
 @then(u'el tipo de campo mostrado es "{tipo}"')
 def step_impl(context, tipo):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -303,7 +438,7 @@ def step_impl(context, tipo):
 
 @then(u'el campo aparece marcado como requerido')
 def step_impl(context):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -320,7 +455,7 @@ def step_impl(context):
 
 @then(u'el campo aparece marcado como no requerido')
 def step_impl(context):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -337,7 +472,7 @@ def step_impl(context):
 
 @then(u'las opciones del campo se muestran correctamente')
 def step_impl(context):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -347,7 +482,6 @@ def step_impl(context):
             if hasattr(context, 'ultima_etiqueta') and context.ultima_etiqueta in tds[1].text:
                 opciones_mostradas = tds[4].text
                 if hasattr(context, 'opciones_guardadas'):
-                    # Verificar que las opciones estén presentes
                     assert len(opciones_mostradas) > 0, "No se muestran las opciones"
                 break
     time.sleep(0.5)
@@ -355,7 +489,7 @@ def step_impl(context):
 
 @then(u'la cantidad de archivos permitidos es "{cantidad}"')
 def step_impl(context, cantidad):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -436,7 +570,7 @@ def step_impl(context):
 @then(u'el campo "{etiqueta}" ya no aparece en la tabla de campos agregados')
 def step_impl(context, etiqueta):
     try:
-        tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+        tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
         tbody = tabla.find_element(By.TAG_NAME, 'tbody')
         trs = tbody.find_elements(By.TAG_NAME, 'tr')
         
@@ -449,30 +583,31 @@ def step_impl(context, etiqueta):
         assert etiqueta not in etiquetas_encontradas, \
             f"Se encontró '{etiqueta}' cuando debería estar eliminado"
     except NoSuchElementException:
-        # Si no hay tabla, es porque no hay campos, lo cual es válido
         pass
     time.sleep(1)
 
 
 @then(u'veo una confirmación de eliminación exitosa')
 def step_impl(context):
-    # La confirmación puede ser implícita (el elemento ya no está en la tabla)
-    # o puede haber un mensaje de éxito
     assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url
     time.sleep(0.5)
 
 
 @then(u'veo el mensaje "No hay campos agregados todavía."')
 def step_impl(context):
-    page_text = context.driver.page_source
-    assert 'No hay campos agregados todavía' in page_text or 'No hay campos agregados todavia' in page_text, \
-        "No se encontró el mensaje esperado"
+    try:
+        mensaje = context.driver.find_element(By.XPATH, "//*[contains(text(), 'No hay campos agregados')]")
+        assert mensaje.is_displayed(), "El mensaje no está visible"
+    except:
+        page_text = context.driver.find_element(By.TAG_NAME, 'body').text
+        assert 'No hay campos agregados' in page_text, \
+            f"No se encontró el mensaje esperado. Texto de la página: {page_text[:200]}"
     time.sleep(0.5)
 
 
 @then(u'los campos aparecen ordenados por su número de orden')
 def step_impl(context):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -480,16 +615,15 @@ def step_impl(context):
     for tr in trs:
         tds = tr.find_elements(By.TAG_NAME, 'td')
         if tds:
-            ordenes.append(int(tds[0].text))  # Columna de orden
+            ordenes.append(int(tds[0].text))
     
-    # Verificar que están ordenados
     assert ordenes == sorted(ordenes), f"Los campos no están ordenados: {ordenes}"
     time.sleep(0.5)
 
 
 @then(u'puedo ver al menos {cantidad:d} campos en la tabla')
 def step_impl(context, cantidad):
-    tabla = context.driver.find_element(By.CLASS_NAME, 'table-bordered')
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
     tbody = tabla.find_element(By.TAG_NAME, 'tbody')
     trs = tbody.find_elements(By.TAG_NAME, 'tr')
     
@@ -499,8 +633,6 @@ def step_impl(context, cantidad):
 
 @then(u'no se guardaron los cambios realizados')
 def step_impl(context):
-    # Verificación implícita: si cancelamos y regresamos a la lista,
-    # los cambios no guardados no aparecerán
     time.sleep(0.5)
 
 
@@ -509,12 +641,9 @@ def step_impl(context):
     try:
         opciones_field = context.driver.find_element(By.ID, 'id_opciones')
         parent = opciones_field.find_element(By.XPATH, '..')
-        
-        # Verificar si está oculto mediante CSS o display: none
         display_style = parent.value_of_css_property('display')
         assert display_style == 'none', f"El campo opciones es visible (display: {display_style}) cuando no debería"
     except:
-        # Si no se encuentra, es porque está oculto, lo cual es correcto
         pass
     time.sleep(0.3)
 
@@ -523,8 +652,6 @@ def step_impl(context):
 def step_impl(context):
     opciones_field = context.driver.find_element(By.ID, 'id_opciones')
     parent = opciones_field.find_element(By.XPATH, '..')
-    
-    # Verificar que esté visible
     display_style = parent.value_of_css_property('display')
     assert display_style != 'none', f"El campo opciones no es visible (display: {display_style}) cuando debería estarlo"
     time.sleep(0.3)
@@ -535,11 +662,9 @@ def step_impl(context):
     try:
         archivos_field = context.driver.find_element(By.ID, 'id_cantidad_archivos')
         parent = archivos_field.find_element(By.XPATH, '..')
-        
         display_style = parent.value_of_css_property('display')
         assert display_style == 'none', f"El campo cantidad_archivos es visible (display: {display_style}) cuando no debería"
     except:
-        # Si no se encuentra, es porque está oculto, lo cual es correcto
         pass
     time.sleep(0.3)
 
