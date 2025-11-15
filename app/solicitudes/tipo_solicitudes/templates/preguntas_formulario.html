@@ -1,0 +1,88 @@
+{% extends 'blank.html' %}
+
+{% block contenido %}
+
+<h1>Configurar campos del formulario: {{ formulario.nombre }}</h1>
+
+<!-- FORMULARIO PARA AGREGAR CAMPOS -->
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button class="btn btn-primary" type="submit">Agregar campo</button>
+</form>
+
+<hr>
+
+<h3>Campos agregados</h3>
+
+{% if campos %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Orden</th>
+            <th>Etiqueta</th>
+            <th>Tipo</th>
+            <th>Requerido</th>
+            <th>Opciones</th>
+            <th>Archivo(s)</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for campo in campos %}
+        <tr>
+            <td>{{ campo.orden }}</td>
+            <td>{{ campo.etiqueta }}</td>
+            <td>{{ campo.get_tipo_display }}</td>
+            <td>{{ campo.requerido }}</td>
+            <td>{{ campo.opciones }}</td>
+            <td>{{ campo.cantidad_archivos }}</td>
+            <td>
+                <a href="{% url 'eliminar_campo' campo.id %}" class="btn btn-danger btn-sm">
+                    Eliminar
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No hay campos agregados todavía.</p>
+{% endif %}
+
+<!-- JS PARA MOSTRAR/OCULTAR CAMPOS SEGÚN EL TIPO -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const tipoInput = document.querySelector("#id_tipo");
+    const opcionesField = document.querySelector("#id_opciones").closest("p");
+    const archivosField = document.querySelector("#id_cantidad_archivos").closest("p");
+
+    function actualizarVisibilidad() {
+        const tipo = tipoInput.value;
+
+        // Visible solo si tipo == select
+        if (tipo === "select") {
+            opcionesField.style.display = "block";
+        } else {
+            opcionesField.style.display = "none";
+            document.querySelector("#id_opciones").value = "";
+        }
+
+        // Visible solo si tipo == file
+        if (tipo === "file") {
+            archivosField.style.display = "block";
+        } else {
+            archivosField.style.display = "none";
+            document.querySelector("#id_cantidad_archivos").value = 0;
+        }
+    }
+
+    tipoInput.addEventListener("change", actualizarVisibilidad);
+    actualizarVisibilidad(); // Ejecutar al cargar
+});
+</script>
+
+{% endblock contenido %}
