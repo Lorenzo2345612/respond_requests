@@ -22,5 +22,3 @@ Característica: Visualización y seguimiento de solicitudes
     Dado que estoy en la página de listado de solicitudes
     Cuando escribo "FOLIO12345" en el buscador de folios
     Entonces debo ver en la tabla una fila con el folio "FOLIO12345"
-
-
