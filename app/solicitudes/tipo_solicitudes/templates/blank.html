@@ -1,144 +1,389 @@
 {% load static %}
 <!DOCTYPE html>
 <html data-bs-theme="light" lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+    />
     <title>Blank Page - Graficas Testing IS UAZ</title>
-    <meta name="description" content="Plantilla proporcionada por Software Girl´s para evaluación de Pruebas y Mantenimiento de Software">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/Nunito.css' %}">
-    <link rel="stylesheet" href="{% static 'fonts/fontawesome-all.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/bss-overrides.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-</head>
+    <meta
+      name="description"
+      content="Plantilla proporcionada por Software Girl´s para evaluación de Pruebas y Mantenimiento de Software"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'bootstrap/css/bootstrap.min.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'css/Nunito.css' %}" />
+    <link
+      rel="stylesheet"
+      href="{% static 'fonts/fontawesome-all.min.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'css/bss-overrides.css' %}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+  </head>
 
-<body id="page-top">
+  <body id="page-top">
     <div id="wrapper">
-        <!-- SIDEBAR -->
-        <nav class="navbar align-items-start p-0 sidebar sidebar-dark accordion bg-gradient-primary navbar-dark">
-            <div class="container-fluid d-flex flex-column p-0"><a class="navbar-brand d-flex justify-content-center align-items-center m-0 sidebar-brand" href="#">
-                    <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-laugh-wink"></i></div>
-                    <div class="mx-3 sidebar-brand-text"><span>Software Girls´s</span></div>
-                </a>
-                <hr class="my-0 sidebar-divider">
-                <ul class="navbar-nav text-light" id="accordionSidebar">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'bienvenida' %}"><i class="fas fa-tachometer-alt"></i><span>Bienvenida</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'agrega_solicitud' %}"><i class="fas fa-user"></i><span>Agregar solicitud</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'lista_tipo_solicitudes' %}"><i class="fas fa-tachometer-alt"></i><span>Lista Tipo Solicitudes</span></a></li>
-                    <li class="nav-item"><a id="menu-graficas" class="nav-link" href="{% url 'grafica_solicitudes' %}"><i class="fa fa-bar-chart"></i><span>Gráficas</span></a></li>
-                    
-                    <li class="nav-item"><a id="menu-graficas" class="nav-link" href="{% url 'metricas' %}"><i class="fa fa-bar-chart"></i><span>Metricas</span></a></li>
-                </ul>
-                <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
+      <!-- SIDEBAR -->
+      <nav
+        class="navbar align-items-start p-0 sidebar sidebar-dark accordion bg-gradient-primary navbar-dark"
+      >
+        <div class="container-fluid d-flex flex-column p-0">
+          <a
+            class="navbar-brand d-flex justify-content-center align-items-center m-0 sidebar-brand"
+            href="#"
+          >
+            <div class="sidebar-brand-icon rotate-n-15">
+              <i class="fas fa-laugh-wink"></i>
             </div>
-        </nav>
-        <div class="d-flex flex-column" id="content-wrapper">
-            <div id="content">
-                <!--NavBar superior -->
-                <nav class="navbar navbar-expand bg-white shadow mb-4 topbar">
-                    <div class="container-fluid"><button class="btn btn-link d-md-none me-3 rounded-circle" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
-                        <form class="d-none d-sm-inline-block mw-100 ms-md-3 me-auto my-2 my-md-0 navbar-search">
-                            <div class="input-group"><input class="bg-light form-control border-0 small" type="text" placeholder="Search for ..."><button class="btn btn-primary py-0" type="button"><i class="fas fa-search"></i></button></div>
-                        </form>
-                        <ul class="navbar-nav flex-nowrap ms-auto">
-                            <li class="nav-item dropdown d-sm-none no-arrow"><a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
-                                <div class="dropdown-menu p-3 dropdown-menu-end animated--grow-in" aria-labelledby="searchDropdown">
-                                    <form class="w-100 me-auto navbar-search">
-                                        <div class="input-group"><input class="bg-light border-0 form-control small" type="text" placeholder="Search for ..."><button class="btn btn-primary" type="button"><i class="fas fa-search"></i></button></div>
-                                    </form>
-                                </div>
-                            </li>
-                            <li class="nav-item mx-1 dropdown no-arrow">
-                                <div class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><span class="badge bg-danger badge-counter">3+</span><i class="fas fa-bell fa-fw"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end dropdown-list animated--grow-in">
-                                        <h6 class="dropdown-header">alerts center</h6><a class="dropdown-item d-flex align-items-center" href="#">
-                                            <div class="me-3">
-                                                <div class="bg-primary icon-circle"><i class="fas fa-file-alt text-white"></i></div>
-                                            </div>
-                                            <div><span class="small text-gray-500">December 12, 2019</span>
-                                                <p>A new monthly report is ready to download!</p>
-                                            </div>
-                                        </a><a class="dropdown-item d-flex align-items-center" href="#">
-                                            <div class="me-3">
-                                                <div class="bg-success icon-circle"><i class="fas fa-donate text-white"></i></div>
-                                            </div>
-                                            <div><span class="small text-gray-500">December 7, 2019</span>
-                                                <p>$290.29 has been deposited into your account!</p>
-                                            </div>
-                                        </a><a class="dropdown-item d-flex align-items-center" href="#">
-                                            <div class="me-3">
-                                                <div class="bg-warning icon-circle"><i class="fas fa-exclamation-triangle text-white"></i></div>
-                                            </div>
-                                            <div><span class="small text-gray-500">December 2, 2019</span>
-                                                <p>Spending Alert: We've noticed unusually high spending for your account.</p>
-                                            </div>
-                                        </a><a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="nav-item mx-1 dropdown no-arrow">
-                                <div class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><span class="badge bg-danger badge-counter">7</span><i class="fas fa-envelope fa-fw"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end dropdown-list animated--grow-in">
-                                        <h6 class="dropdown-header">alerts center</h6><a class="dropdown-item d-flex align-items-center" href="#">
-                                            <div class="me-3 dropdown-list-image"><img class="rounded-circle" src="{% static 'img/avatars/avatar4.jpeg' %}">
-                                                <div class="bg-success status-indicator"></div>
-                                            </div>
-                                            <div class="fw-bold">
-                                                <div class="text-truncate"><span>Hi there! I am wondering if you can help me with a problem I've been having.</span></div>
-                                                <p class="mb-0 small text-gray-500">Emily Fowler - 58m</p>
-                                            </div>
-                                        </a><a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
-                                    </div>
-                                </div>
-                                <div class="shadow dropdown-list dropdown-menu dropdown-menu-end" aria-labelledby="alertsDropdown"></div>
-                            </li>
-                            <div class="d-none d-sm-block topbar-divider"></div>
-                            <li class="nav-item dropdown no-arrow">
-                                <div class="nav-item dropdown no-arrow">
-                                    {% if user.is_authenticated %}
-                                    <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#">
-                                        <span class="d-none d-lg-inline me-2 text-gray-600 small">{{ user.get_full_name }}</span>
-                                        <img class="border rounded-circle img-profile" src="{% static 'img/avatars/avatar1.jpeg' %}">
-                                    </a>
-                                    <div class="dropdown-menu shadow dropdown-menu-end animated--grow-in">
-                                        <a class="dropdown-item" href="{% url 'solicitudes_app:perfil' %}"><i class="fas fa-user me-2 fa-sm fa-fw text-gray-400"></i>&nbsp;Mi Perfil</a>
-                                        {% if user.puede_gestionar_usuarios %}
-                                        <a class="dropdown-item" href="{% url 'solicitudes_app:lista_usuarios' %}"><i class="fas fa-users me-2 fa-sm fa-fw text-gray-400"></i>&nbsp;Gestionar Usuarios</a>
-                                        {% endif %}
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="{% url 'solicitudes_app:logout' %}"><i class="fas fa-sign-out-alt me-2 fa-sm fa-fw text-gray-400"></i>&nbsp;Cerrar Sesión</a>
-                                    </div>
-                                    {% else %}
-                                    <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#">
-                                        <span class="d-none d-lg-inline me-2 text-gray-600 small">Invitado</span>
-                                        <img class="border rounded-circle img-profile" src="{% static './img/avatars/void.png' %}">
-                                    </a>
-                                    <div class="dropdown-menu shadow dropdown-menu-end animated--grow-in">
-                                        <a class="dropdown-item" href="{% url 'solicitudes_app:login' %}"><i class="fas fa-sign-in-alt me-2 fa-sm fa-fw text-gray-400"></i>&nbsp;Iniciar Sesión</a>
-                                        <a class="dropdown-item" href="{% url 'solicitudes_app:registro' %}"><i class="fas fa-user-plus me-2 fa-sm fa-fw text-gray-400"></i>&nbsp;Registrarse</a>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
-                <!-- Contenido funcional de cada página -->
-                {% block contenido %}{% endblock %}
+            <div class="mx-3 sidebar-brand-text">
+              <span>Software Girls´s</span>
             </div>
-            <footer class="bg-white sticky-footer">
-                <div class="container my-auto">
-                    <div class="text-center my-auto copyright"><span>Copyright © Testing IS UAZ 2025</span></div>
+          </a>
+          <hr class="my-0 sidebar-divider" />
+          <ul class="navbar-nav text-light" id="accordionSidebar">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'bienvenida' %}"
+                ><i class="fas fa-tachometer-alt"></i><span>Bienvenida</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'agrega_solicitud' %}"
+                ><i class="fas fa-user"></i><span>Agregar solicitud</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'lista_tipo_solicitudes' %}"
+                ><i class="fas fa-tachometer-alt"></i
+                ><span>Lista Tipo Solicitudes</span></a
+              >
+            </li>
+            {% if user.is_authenticated and user.puede_atender_solicitudes %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'listar_solicitudes' %}"
+                ><i class="fas fa-clipboard"></i
+                ><span>Atender solicitudes</span></a
+              >
+            </li>
+            {% endif %}
+            <li class="nav-item">
+              <a
+                id="menu-graficas"
+                class="nav-link"
+                href="{% url 'grafica_solicitudes' %}"
+                ><i class="fa fa-bar-chart"></i><span>Gráficas</span></a
+              >
+            </li>
+
+            <li class="nav-item">
+              <a id="menu-graficas" class="nav-link" href="{% url 'metricas' %}"
+                ><i class="fa fa-bar-chart"></i><span>Metricas</span></a
+              >
+            </li>
+          </ul>
+          <div class="text-center d-none d-md-inline">
+            <button
+              class="btn rounded-circle border-0"
+              id="sidebarToggle"
+              type="button"
+            ></button>
+          </div>
+        </div>
+      </nav>
+      <div class="d-flex flex-column" id="content-wrapper">
+        <div id="content">
+          <!--NavBar superior -->
+          <nav class="navbar navbar-expand bg-white shadow mb-4 topbar">
+            <div class="container-fluid">
+              <button
+                class="btn btn-link d-md-none me-3 rounded-circle"
+                id="sidebarToggleTop"
+                type="button"
+              >
+                <i class="fas fa-bars"></i>
+              </button>
+              <form
+                class="d-none d-sm-inline-block mw-100 ms-md-3 me-auto my-2 my-md-0 navbar-search"
+              >
+                <div class="input-group">
+                  <input
+                    class="bg-light form-control border-0 small"
+                    type="text"
+                    placeholder="Search for ..."
+                  /><button class="btn btn-primary py-0" type="button">
+                    <i class="fas fa-search"></i>
+                  </button>
                 </div>
-            </footer>
-        </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+              </form>
+              <ul class="navbar-nav flex-nowrap ms-auto">
+                <li class="nav-item dropdown d-sm-none no-arrow">
+                  <a
+                    class="dropdown-toggle nav-link"
+                    aria-expanded="false"
+                    data-bs-toggle="dropdown"
+                    href="#"
+                    ><i class="fas fa-search"></i
+                  ></a>
+                  <div
+                    class="dropdown-menu p-3 dropdown-menu-end animated--grow-in"
+                    aria-labelledby="searchDropdown"
+                  >
+                    <form class="w-100 me-auto navbar-search">
+                      <div class="input-group">
+                        <input
+                          class="bg-light border-0 form-control small"
+                          type="text"
+                          placeholder="Search for ..."
+                        /><button class="btn btn-primary" type="button">
+                          <i class="fas fa-search"></i>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </li>
+                <li class="nav-item mx-1 dropdown no-arrow">
+                  <div class="nav-item dropdown no-arrow">
+                    <a
+                      class="dropdown-toggle nav-link"
+                      aria-expanded="false"
+                      data-bs-toggle="dropdown"
+                      href="#"
+                      ><span class="badge bg-danger badge-counter">3+</span
+                      ><i class="fas fa-bell fa-fw"></i
+                    ></a>
+                    <div
+                      class="dropdown-menu dropdown-menu-end dropdown-list animated--grow-in"
+                    >
+                      <h6 class="dropdown-header">alerts center</h6>
+                      <a
+                        class="dropdown-item d-flex align-items-center"
+                        href="#"
+                      >
+                        <div class="me-3">
+                          <div class="bg-primary icon-circle">
+                            <i class="fas fa-file-alt text-white"></i>
+                          </div>
+                        </div>
+                        <div>
+                          <span class="small text-gray-500"
+                            >December 12, 2019</span
+                          >
+                          <p>A new monthly report is ready to download!</p>
+                        </div> </a
+                      ><a
+                        class="dropdown-item d-flex align-items-center"
+                        href="#"
+                      >
+                        <div class="me-3">
+                          <div class="bg-success icon-circle">
+                            <i class="fas fa-donate text-white"></i>
+                          </div>
+                        </div>
+                        <div>
+                          <span class="small text-gray-500"
+                            >December 7, 2019</span
+                          >
+                          <p>$290.29 has been deposited into your account!</p>
+                        </div> </a
+                      ><a
+                        class="dropdown-item d-flex align-items-center"
+                        href="#"
+                      >
+                        <div class="me-3">
+                          <div class="bg-warning icon-circle">
+                            <i
+                              class="fas fa-exclamation-triangle text-white"
+                            ></i>
+                          </div>
+                        </div>
+                        <div>
+                          <span class="small text-gray-500"
+                            >December 2, 2019</span
+                          >
+                          <p>
+                            Spending Alert: We've noticed unusually high
+                            spending for your account.
+                          </p>
+                        </div> </a
+                      ><a
+                        class="dropdown-item text-center small text-gray-500"
+                        href="#"
+                        >Show All Alerts</a
+                      >
+                    </div>
+                  </div>
+                </li>
+                <li class="nav-item mx-1 dropdown no-arrow">
+                  <div class="nav-item dropdown no-arrow">
+                    <a
+                      class="dropdown-toggle nav-link"
+                      aria-expanded="false"
+                      data-bs-toggle="dropdown"
+                      href="#"
+                      ><span class="badge bg-danger badge-counter">7</span
+                      ><i class="fas fa-envelope fa-fw"></i
+                    ></a>
+                    <div
+                      class="dropdown-menu dropdown-menu-end dropdown-list animated--grow-in"
+                    >
+                      <h6 class="dropdown-header">alerts center</h6>
+                      <a
+                        class="dropdown-item d-flex align-items-center"
+                        href="#"
+                      >
+                        <div class="me-3 dropdown-list-image">
+                          <img
+                            class="rounded-circle"
+                            src="{% static 'img/avatars/avatar4.jpeg' %}"
+                          />
+                          <div class="bg-success status-indicator"></div>
+                        </div>
+                        <div class="fw-bold">
+                          <div class="text-truncate">
+                            <span
+                              >Hi there! I am wondering if you can help me with
+                              a problem I've been having.</span
+                            >
+                          </div>
+                          <p class="mb-0 small text-gray-500">
+                            Emily Fowler - 58m
+                          </p>
+                        </div> </a
+                      ><a
+                        class="dropdown-item text-center small text-gray-500"
+                        href="#"
+                        >Show All Alerts</a
+                      >
+                    </div>
+                  </div>
+                  <div
+                    class="shadow dropdown-list dropdown-menu dropdown-menu-end"
+                    aria-labelledby="alertsDropdown"
+                  ></div>
+                </li>
+                <div class="d-none d-sm-block topbar-divider"></div>
+                <li class="nav-item dropdown no-arrow">
+                  <div class="nav-item dropdown no-arrow">
+                    {% if user.is_authenticated %}
+                    <a
+                      class="dropdown-toggle nav-link"
+                      aria-expanded="false"
+                      data-bs-toggle="dropdown"
+                      href="#"
+                    >
+                      <span class="d-none d-lg-inline me-2 text-gray-600 small"
+                        >{{ user.get_full_name }}</span
+                      >
+                      <img
+                        class="border rounded-circle img-profile"
+                        src="{% static 'img/avatars/avatar1.jpeg' %}"
+                      />
+                    </a>
+                    <div
+                      class="dropdown-menu shadow dropdown-menu-end animated--grow-in"
+                    >
+                      <a
+                        class="dropdown-item"
+                        href="{% url 'solicitudes_app:perfil' %}"
+                        ><i
+                          class="fas fa-user me-2 fa-sm fa-fw text-gray-400"
+                        ></i
+                        >&nbsp;Mi Perfil</a
+                      >
+                      {% if user.puede_gestionar_usuarios %}
+                      <a
+                        class="dropdown-item"
+                        href="{% url 'solicitudes_app:lista_usuarios' %}"
+                        ><i
+                          class="fas fa-users me-2 fa-sm fa-fw text-gray-400"
+                        ></i
+                        >&nbsp;Gestionar Usuarios</a
+                      >
+                      {% endif %}
+                      <div class="dropdown-divider"></div>
+                      <a
+                        class="dropdown-item"
+                        href="{% url 'solicitudes_app:logout' %}"
+                        ><i
+                          class="fas fa-sign-out-alt me-2 fa-sm fa-fw text-gray-400"
+                        ></i
+                        >&nbsp;Cerrar Sesión</a
+                      >
+                    </div>
+                    {% else %}
+                    <a
+                      class="dropdown-toggle nav-link"
+                      aria-expanded="false"
+                      data-bs-toggle="dropdown"
+                      href="#"
+                    >
+                      <span class="d-none d-lg-inline me-2 text-gray-600 small"
+                        >Invitado</span
+                      >
+                      <img
+                        class="border rounded-circle img-profile"
+                        src="{% static './img/avatars/void.png' %}"
+                      />
+                    </a>
+                    <div
+                      class="dropdown-menu shadow dropdown-menu-end animated--grow-in"
+                    >
+                      <a
+                        class="dropdown-item"
+                        href="{% url 'solicitudes_app:login' %}"
+                        ><i
+                          class="fas fa-sign-in-alt me-2 fa-sm fa-fw text-gray-400"
+                        ></i
+                        >&nbsp;Iniciar Sesión</a
+                      >
+                      <a
+                        class="dropdown-item"
+                        href="{% url 'solicitudes_app:registro' %}"
+                        ><i
+                          class="fas fa-user-plus me-2 fa-sm fa-fw text-gray-400"
+                        ></i
+                        >&nbsp;Registrarse</a
+                      >
+                    </div>
+                    {% endif %}
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </nav>
+          <!-- Contenido funcional de cada página -->
+          {% block contenido %}{% endblock %}
+        </div>
+        <footer class="bg-white sticky-footer">
+          <div class="container my-auto">
+            <div class="text-center my-auto copyright">
+              <span>Copyright © Testing IS UAZ 2025</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+      <a class="border rounded d-inline scroll-to-top" href="#page-top"
+        ><i class="fas fa-angle-up"></i
+      ></a>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
     <script src="{% static 'js/bs-init.js' %}"></script>
     <script src="{% static 'js/theme.js' %}"></script>
-</body>
-
+  </body>
 </html>
