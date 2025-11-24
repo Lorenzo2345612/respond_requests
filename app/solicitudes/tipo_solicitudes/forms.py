@@ -34,6 +34,7 @@ class FormCampoFormulario(forms.ModelForm):
         # El formulario necesita saber qué formularioSolicitud está editando
         self.formulario = kwargs.pop("formulario", None)
         super().__init__(*args, **kwargs)
+        self.fields['formulario'].required = False
         self.fields['formulario'].widget = forms.HiddenInput()
 
     def clean_orden(self):

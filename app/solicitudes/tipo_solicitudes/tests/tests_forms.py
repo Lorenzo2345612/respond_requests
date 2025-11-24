@@ -4,13 +4,17 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from tipo_solicitudes.models import CampoFormulario, RespuestaCampo, Solicitud, TipoSolicitud, FormularioSolicitud
 from tipo_solicitudes.forms import FormArchivoAdjunto, FormRespuestaCampo, FormSeguimientoSolicitud, FormSolicitud, FormTipoSolicitud, FormFormularioSolicitud, FormCampoFormulario
+from django.contrib.auth import get_user_model
+
+Usuario = get_user_model()
 
 class TestFromTipoSolicitud(TestCase):
     def test_informacion_valida(self):
+        Usuario.objects.create_user(username='responsable1', email='resp1@test.com', password='password')
         data = {
             'nombre': 'Constancia',
             'descripcion': 'Constancia para servicio social',
-            'responsable': '1'
+            'responsable': Usuario.objects.first().pk
         }
         form = FormTipoSolicitud(data)
         self.assertTrue(form.is_valid())
@@ -52,13 +56,14 @@ class TestFromTipoSolicitud(TestCase):
         self.assertEqual(form.errors['responsable'][0], 'Este campo es obligatorio.')
 
     def test_guarda_constancia(self):
+        Usuario.objects.create_user(username='responsable2', email='resp2@test.com', password='password')
         data = {
             'nombre': 'Constancia',
             'descripcion': 'Constancia para servicio social',
-            'responsable': '2'
+            'responsable': Usuario.objects.first().pk
         }
         form = FormTipoSolicitud(data)
-        # form.is_valid()
+        self.assertTrue(form.is_valid())
         form.save()
 
         self.assertEqual(form.data.get('nombre'), TipoSolicitud.objects.first().nombre)
@@ -166,15 +171,16 @@ class TestFormCampoFormulario(TestCase):
 
 class TestFormSolicitud(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='password')
+        self.user = Usuario.objects.create_user(username='testuser', password='password')
         self.tipo_solicitud = TipoSolicitud.objects.create(
             nombre='Viaje',
             descripcion='Solicitud de permiso de viaje',
-            responsable='4'
+            responsable=self.user.pk
         )
-        
+
         self.valid_data = {
             'tipo_solicitud': self.tipo_solicitud.pk,
+            'estatus': '1',
         }
 
     def test_solicitud_valida(self):
@@ -198,33 +204,33 @@ class TestFormSolicitud(TestCase):
     def test_guardar_solicitud(self):
         form = FormSolicitud(data=self.valid_data)
         self.assertTrue(form.is_valid())
-        
-        solicitud = form.save(commit=False) 
+
+        solicitud = form.save(commit=False)
         solicitud.usuario = self.user
         solicitud.folio = 'TEST-001'
         solicitud.save()
-        
+
         self.assertEqual(Solicitud.objects.count(), 1)
         self.assertEqual(Solicitud.objects.first().tipo_solicitud, self.tipo_solicitud)
         
         
 class TestFormRespuestaCampo(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser2')
+        self.user = Usuario.objects.create_user(username='testuser2')
         self.tipo_solicitud = TipoSolicitud.objects.create(nombre='Test')
         self.solicitud = Solicitud.objects.create(
-            usuario=self.user, 
-            tipo_solicitud=self.tipo_solicitud, 
+            usuario=self.user,
+            tipo_solicitud=self.tipo_solicitud,
             folio='RESP-001'
         )
         self.formulario = FormularioSolicitud.objects.create(
-            tipo_solicitud=self.tipo_solicitud, 
+            tipo_solicitud=self.tipo_solicitud,
             nombre='Formulario Test'
         )
         self.campo = CampoFormulario.objects.create(
-            formulario=self.formulario, 
-            nombre='matricula', 
-            etiqueta='Matrícula', 
+            formulario=self.formulario,
+            nombre='matricula',
+            etiqueta='Matrícula',
             tipo='text'
         )
 
@@ -319,14 +325,14 @@ class TestFormArchivoAdjunto(TestCase):
     def test_guardar_archivo_adjunto(self):
         form = FormArchivoAdjunto(data=self.valid_data, files=self.valid_files)
         self.assertTrue(form.is_valid())
-        
+
         archivo_adjunto = form.save(commit=False)
-        user = User.objects.create_user(username='archiver')
+        user = Usuario.objects.create_user(username='archiver')
         tipo = TipoSolicitud.objects.create(nombre='Archiv')
         solicitud = Solicitud.objects.create(usuario=user, tipo_solicitud=tipo, folio='FILE-001')
-        
+
         archivo_adjunto.solicitud = solicitud
         archivo_adjunto.save()
-        
+
         self.assertEqual(archivo_adjunto.nombre, 'Constancia de Bachiller')
         self.assertIsNotNone(archivo_adjunto.archivo)
