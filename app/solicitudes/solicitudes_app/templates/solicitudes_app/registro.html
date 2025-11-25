@@ -22,7 +22,12 @@
                     <div class="col-lg-7">
                         <div class="p-5">
                             <div class="text-center">
-                                <h4 class="text-dark mb-4">¡Crea una cuenta!</h4>
+                                <h4 class="text-dark mb-4">¡Crea una cuenta de Alumno!</h4>
+                                <p class="text-muted small mb-4">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Solo los alumnos pueden registrarse aquí. 
+                                    El personal administrativo debe contactar al administrador del sistema.
+                                </p>
                             </div>
                             
                             {% if messages %}
@@ -66,13 +71,8 @@
                                     {% endif %}
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label small">Rol</label>
-                                    {{ form.rol }}
-                                    {% if form.rol.errors %}
-                                        <div class="text-danger small mt-1">{{ form.rol.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
+                                {# Campo rol oculto - siempre será alumno #}
+                                {{ form.rol }}
                                 
                                 <div class="mb-3">
                                     {{ form.matricula }}
@@ -85,13 +85,6 @@
                                     {{ form.telefono }}
                                     {% if form.telefono.errors %}
                                         <div class="text-danger small mt-1">{{ form.telefono.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    {{ form.area }}
-                                    {% if form.area.errors %}
-                                        <div class="text-danger small mt-1">{{ form.area.errors.0 }}</div>
                                     {% endif %}
                                 </div>
                                 

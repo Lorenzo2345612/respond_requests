@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from .models import Usuario
@@ -11,6 +12,15 @@ def login_view(request):
     """Vista para login de usuarios"""
     if request.user.is_authenticated:
         return redirect('bienvenida')
+    
+    # Verificar si existe el admin predeterminado que aún no ha cambiado su contraseña
+    mostrar_credenciales_admin = False
+    try:
+        admin_user = Usuario.objects.get(username='admin', rol='administrador')
+        if admin_user.debe_cambiar_password:
+            mostrar_credenciales_admin = True
+    except Usuario.DoesNotExist:
+        pass
     
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
@@ -45,7 +55,10 @@ def login_view(request):
     else:
         form = LoginForm()
     
-    return render(request, 'solicitudes_app/login.html', {'form': form})
+    return render(request, 'solicitudes_app/login.html', {
+        'form': form,
+        'mostrar_credenciales_admin': mostrar_credenciales_admin
+    })
 
 
 def registro_view(request):
@@ -82,9 +95,12 @@ def perfil_view(request):
     if request.method == 'POST':
         form = ActualizarPerfilForm(request.POST, instance=request.user)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            # Marcar perfil como completo
+            user.perfil_completo = True
+            user.save()
             messages.success(request, 'Perfil actualizado exitosamente.')
-            return redirect('solicitudes_app:perfil')
+            return redirect('bienvenida')
         else:
             messages.error(request, 'Por favor, corrige los errores en el formulario.')
     else:
@@ -118,9 +134,41 @@ def editar_usuario_view(request, usuario_id):
     
     usuario = get_object_or_404(Usuario, id=usuario_id)
     
+    # Validación: No permitir que el admin se quite su propio rol de administrador
     if request.method == 'POST':
         form = GestionarUsuarioForm(request.POST, instance=usuario)
         if form.is_valid():
+            # Validar que el admin no se quite su propio rol de administrador
+            if usuario.id == request.user.id and form.cleaned_data.get('rol') != 'administrador':
+                messages.error(request, 'No puedes quitarte tu propio rol de administrador.')
+                return render(request, 'solicitudes_app/editar_usuario.html', {
+                    'form': form,
+                    'usuario': usuario
+                })
+            
+            # Validar que no desactive su propia cuenta
+            if usuario.id == request.user.id and not form.cleaned_data.get('is_active', True):
+                messages.error(request, 'No puedes desactivar tu propia cuenta.')
+                return render(request, 'solicitudes_app/editar_usuario.html', {
+                    'form': form,
+                    'usuario': usuario
+                })
+            
+            # Contar administradores activos antes de guardar
+            admins_activos = Usuario.objects.filter(rol='administrador', is_active=True).count()
+            
+            # Si este es el último admin activo, no permitir cambio de rol o desactivación
+            if (usuario.rol == 'administrador' and usuario.is_active and admins_activos <= 1):
+                if (form.cleaned_data.get('rol') != 'administrador' or 
+                    not form.cleaned_data.get('is_active', True)):
+                    messages.error(request, 
+                        'No se puede modificar este usuario porque es el último administrador activo del sistema. '
+                        'Crea otro administrador primero.')
+                    return render(request, 'solicitudes_app/editar_usuario.html', {
+                        'form': form,
+                        'usuario': usuario
+                    })
+            
             form.save()
             messages.success(request, f'Usuario {form.instance.get_full_name()} actualizado exitosamente.')
             return redirect('solicitudes_app:lista_usuarios')
@@ -145,13 +193,54 @@ def eliminar_usuario_view(request, usuario_id):
     
     usuario = get_object_or_404(Usuario, id=usuario_id)
     
-    # No permitir eliminar el propio usuario
+    # Validación 1: No permitir eliminar el propio usuario
     if usuario.id == request.user.id:
         messages.error(request, 'No puedes eliminar tu propia cuenta.')
         return redirect('solicitudes_app:lista_usuarios')
+    
+    # Validación 2: No permitir eliminar el último administrador activo
+    if usuario.rol == 'administrador' and usuario.is_active:
+        admins_activos = Usuario.objects.filter(rol='administrador', is_active=True).count()
+        if admins_activos <= 1:
+            messages.error(request, 
+                'No se puede eliminar el último administrador activo del sistema. '
+                'Crea otro administrador primero.')
+            return redirect('solicitudes_app:lista_usuarios')
     
     username = usuario.username
     usuario.delete()
     messages.success(request, f'Usuario {username} eliminado exitosamente.')
     return redirect('solicitudes_app:lista_usuarios')
+
+
+@login_required
+def cambiar_password_view(request):
+    """Vista para cambiar la contraseña (obligatorio para usuarios por defecto)"""
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Mantener la sesión activa
+            
+            # Marcar que ya cambió la contraseña
+            user.debe_cambiar_password = False
+            user.save()
+            
+            messages.success(request, '¡Contraseña cambiada exitosamente!')
+            
+            # Si aún no tiene perfil completo, redirigir a perfil
+            if not user.perfil_completo:
+                messages.info(request, 'Ahora completa tu perfil con tus datos personales.')
+                return redirect('solicitudes_app:perfil')
+            
+            return redirect('bienvenida')
+        else:
+            messages.error(request, 'Por favor, corrige los errores en el formulario.')
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    return render(request, 'solicitudes_app/cambiar_password.html', {
+        'form': form,
+        'obligatorio': request.user.debe_cambiar_password
+    })
 

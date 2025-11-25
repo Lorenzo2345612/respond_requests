@@ -27,6 +27,21 @@
                                         <h4 class="text-dark mb-4">¡Bienvenido de vuelta!</h4>
                                     </div>
                                     
+                                    {% if mostrar_credenciales_admin %}
+                                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                            <strong><i class="fas fa-info-circle"></i> Primera vez en el sistema</strong>
+                                            <p class="mb-2 mt-2">Se ha creado un usuario administrador predeterminado para configurar el sistema:</p>
+                                            <div class="bg-light p-3 rounded border">
+                                                <p class="mb-1"><strong>Usuario:</strong> <code>admin</code></p>
+                                                <p class="mb-0"><strong>Contraseña:</strong> <code>admin</code></p>
+                                            </div>
+                                            <p class="mb-0 mt-2 small text-muted">
+                                                <i class="fas fa-lock"></i> Por seguridad, deberás cambiar la contraseña inmediatamente después de iniciar sesión.
+                                            </p>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    {% endif %}
+                                    
                                     {% if messages %}
                                         {% for message in messages %}
                                             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">

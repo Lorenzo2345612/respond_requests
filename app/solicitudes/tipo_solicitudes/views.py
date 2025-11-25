@@ -6,6 +6,7 @@ import json
 from django.http import HttpResponse
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -20,9 +21,11 @@ from .models import ESTATUS, RESPOSABLES, SeguimientoSolicitud, Solicitud, TipoS
 from .funcionalidad import FuncionesAvanzadas
 from django.db.models import Max
 
+@login_required
 def bienvenida(request):
     return render(request, 'bienvenida.html')
 
+@login_required
 def lista_solicitudes(request):
     funciones_avanzadas = FuncionesAvanzadas()
     resultado = funciones_avanzadas.calculo_extremo(2, 2)
@@ -34,6 +37,7 @@ def lista_solicitudes(request):
     return render(request, 'lista_tipo_solicitudes.html', context)
 
 
+@login_required
 def agregar(request):
     if request.method == 'POST':
         form = FormTipoSolicitud(request.POST)
@@ -45,6 +49,7 @@ def agregar(request):
 
     return render(request, 'agregar_solicitud.html', {'form': form})
 
+@login_required
 def obtener_solicitudes(request):
     solicitudes = Solicitud.objects.all()
     tipos_solicitudes = TipoSolicitud.objects.all()
@@ -81,6 +86,7 @@ def solicitudes_por_tipo(solicitudes_filtradas):
     ]
     return data
 
+@login_required
 def vista_tres_graficas(request):
     hoy = datetime.now().date()
     año, semana, _ = hoy.isocalendar()
@@ -100,6 +106,7 @@ def vista_tres_graficas(request):
     }
     return render(request, "grafica.html", context)
 
+@login_required
 def generar_pdf_graficas(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="graficas_solicitudes.pdf"'
@@ -189,6 +196,7 @@ def generar_pdf_graficas(request):
     response.write(pdf)
     return response
 
+@login_required
 def generar_csv_graficas(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="solicitudes.csv"'
@@ -199,6 +207,7 @@ def generar_csv_graficas(request):
         writer.writerow([s.id, s.usuario.username, s.tipo_solicitud.nombre, s.folio, s.fecha_creacion.strftime("%Y-%m-%d %H:%M:%S")])
     return response
 
+@login_required
 def metricas(request):
     total_tickets = Solicitud.objects.count()
 
@@ -280,6 +289,7 @@ def metricas(request):
 
     return render(request, "tipo_solicitudes/metricas.html", context)
 
+@login_required
 def lista_formularios(request):
     context = {
         'formularios': FormularioSolicitud.objects.all(),
@@ -291,6 +301,7 @@ def generar_folio_unico():
     import uuid
     return f"FOLIO-{uuid.uuid4().hex[:8].upper()}"
 
+@login_required
 def crear_o_editar_formulario(request, pk=None):
     instancia = None
     if pk:
@@ -317,6 +328,7 @@ def crear_o_editar_formulario(request, pk=None):
     }
     return render(request, 'crear_formulario_solicitud.html', context)
 
+@login_required
 def crear_campos(request, formulario_id):
     formulario = get_object_or_404(FormularioSolicitud, pk=formulario_id)
 
@@ -346,6 +358,7 @@ def crear_campos(request, formulario_id):
     })
 
 
+@login_required
 def eliminar_campo(request, campo_id):
     campo = get_object_or_404(CampoFormulario, pk=campo_id)
     formulario_id = campo.formulario.id

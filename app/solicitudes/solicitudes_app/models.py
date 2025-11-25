@@ -18,6 +18,8 @@ class Usuario(AbstractUser):
     telefono = models.CharField(max_length=15, blank=True)
     matricula = models.CharField(max_length=20, blank=True, help_text="Solo para alumnos")
     area = models.CharField(max_length=100, blank=True, help_text="Área de trabajo para personal administrativo")
+    debe_cambiar_password = models.BooleanField(default=False, help_text="Indica si el usuario debe cambiar su contraseña en el próximo login")
+    perfil_completo = models.BooleanField(default=False, help_text="Indica si el usuario ha completado su perfil")
     
     class Meta:
         verbose_name = 'Usuario'
