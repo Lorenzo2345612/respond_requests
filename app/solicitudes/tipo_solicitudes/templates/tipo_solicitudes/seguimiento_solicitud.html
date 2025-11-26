@@ -1,0 +1,143 @@
+{% extends 'blank.html' %}
+
+{% block contenido %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Seguimiento de Solicitud</h1>
+        <div>
+            <a href="{% url 'detalle_solicitud' solicitud.id %}" class="btn btn-secondary mr-2">
+                <i class="fas fa-info-circle"></i> Ver Detalle
+            </a>
+            <a href="{% url 'mis_solicitudes' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+    
+    <!-- Información de la solicitud -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-primary text-white">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-ticket-alt"></i> Folio: {{ solicitud.folio }}
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Tipo:</strong><br>
+                    {{ solicitud.tipo_solicitud.nombre }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Solicitante:</strong><br>
+                    {{ solicitud.usuario.get_full_name }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Fecha:</strong><br>
+                    {{ solicitud.fecha_creacion|date:"d/m/Y H:i" }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Estatus Actual:</strong><br>
+                    {% if solicitud.estatus == '1' %}
+                    <span class="badge badge-info badge-pill">{{ solicitud.get_estatus_display }}</span>
+                    {% elif solicitud.estatus == '2' %}
+                    <span class="badge badge-warning badge-pill">{{ solicitud.get_estatus_display }}</span>
+                    {% elif solicitud.estatus == '3' %}
+                    <span class="badge badge-success badge-pill">{{ solicitud.get_estatus_display }}</span>
+                    {% elif solicitud.estatus == '4' %}
+                    <span class="badge badge-danger badge-pill">{{ solicitud.get_estatus_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Timeline de seguimientos -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-history"></i> Historial de Seguimiento
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if seguimientos %}
+            <div class="timeline">
+                {% for seguimiento in seguimientos %}
+                <div class="timeline-item mb-4">
+                    <div class="row">
+                        <div class="col-md-2 text-right">
+                            <small class="text-muted">
+                                <strong>{{ seguimiento.fecha_creacion|date:"d/m/Y" }}</strong><br>
+                                {{ seguimiento.fecha_creacion|date:"H:i" }}
+                            </small>
+                        </div>
+                        <div class="col-md-1 text-center">
+                            <div class="timeline-badge 
+                                {% if seguimiento.estatus == '1' %}bg-info
+                                {% elif seguimiento.estatus == '2' %}bg-warning
+                                {% elif seguimiento.estatus == '3' %}bg-success
+                                {% elif seguimiento.estatus == '4' %}bg-danger
+                                {% endif %}">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                            {% if not forloop.last %}
+                            <div class="timeline-line"></div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <span class="badge 
+                                            {% if seguimiento.estatus == '1' %}badge-info
+                                            {% elif seguimiento.estatus == '2' %}badge-warning
+                                            {% elif seguimiento.estatus == '3' %}badge-success
+                                            {% elif seguimiento.estatus == '4' %}badge-danger
+                                            {% endif %}">
+                                            {{ estatus_dict|get_item:seguimiento.estatus }}
+                                        </span>
+                                    </h5>
+                                    <p class="card-text">
+                                        {{ seguimiento.observaciones|default:"Sin observaciones adicionales" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No hay seguimientos registrados para esta solicitud.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+    <style>
+.timeline-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+}
+
+.timeline-line {
+    width: 2px;
+    height: 60px;
+    background-color: #e3e6f0;
+    margin: 5px auto;
+}
+
+.timeline-item:last-child .timeline-line {
+    display: none;
+}
+</style>
+
+{% load custom_filters %}
+{% endblock contenido %}

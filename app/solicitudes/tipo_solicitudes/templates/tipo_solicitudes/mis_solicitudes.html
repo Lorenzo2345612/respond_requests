@@ -1,0 +1,97 @@
+{% extends 'blank.html' %}
+
+{% block contenido %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Mis Solicitudes</h1>
+        <a href="{% url 'crear_solicitud_usuario' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Solicitud
+        </a>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <label class="mr-2">Filtrar por estatus:</label>
+                <select name="estatus" class="form-control mr-2" onchange="this.form.submit()">
+                    <option value="">Todos</option>
+                    {% for codigo, nombre in estatus_choices %}
+                    <option value="{{ codigo }}" {% if estatus_filtro == codigo %}selected{% endif %}>
+                        {{ nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if estatus_filtro %}
+                <a href="{% url 'mis_solicitudes' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-times"></i> Limpiar
+                </a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <!-- Tabla de solicitudes -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Solicitudes</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Tipo</th>
+                            <th>Fecha Creación</th>
+                            <th>Estatus</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes %}
+                        <tr>
+                            <td><strong>{{ solicitud.folio }}</strong></td>
+                            <td>{{ solicitud.tipo_solicitud.nombre }}</td>
+                            <td>{{ solicitud.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if solicitud.estatus == '1' %}
+                                <span class="badge badge-info">{{ solicitud.get_estatus_display }}</span>
+                                {% elif solicitud.estatus == '2' %}
+                                <span class="badge badge-warning">{{ solicitud.get_estatus_display }}</span>
+                                {% elif solicitud.estatus == '3' %}
+                                <span class="badge badge-success">{{ solicitud.get_estatus_display }}</span>
+                                {% elif solicitud.estatus == '4' %}
+                                <span class="badge badge-danger">{{ solicitud.get_estatus_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'detalle_solicitud' solicitud.id %}" 
+                                   class="btn btn-sm btn-info" 
+                                   title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'seguimiento_solicitud' solicitud.id %}" 
+                                   class="btn btn-sm btn-primary" 
+                                   title="Ver seguimiento">
+                                    <i class="fas fa-list"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <div class="alert alert-info mb-0">
+                                    No tienes solicitudes {% if estatus_filtro %}con este estatus{% endif %}.
+                                    <a href="{% url 'crear_solicitud_usuario' %}">Crear una nueva</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock contenido %}

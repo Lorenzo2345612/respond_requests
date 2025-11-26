@@ -1,0 +1,36 @@
+<h2>Crear Solicitud: {{ tipo.nombre }}</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% for campo in campos %}
+        <label>{{ campo.etiqueta }}</label>
+
+        {% if campo.tipo == 'text' %}
+            <input type="text" name="{{ campo.nombre }}">
+
+        {% elif campo.tipo == 'textarea' %}
+            <textarea name="{{ campo.nombre }}"></textarea>
+
+        {% elif campo.tipo == 'number' %}
+            <input type="number" name="{{ campo.nombre }}">
+
+        {% elif campo.tipo == 'date' %}
+            <input type="date" name="{{ campo.nombre }}">
+
+        {% elif campo.tipo == 'select' %}
+            <select name="{{ campo.nombre }}">
+                {% for opcion in campo.opciones.split(',') %}
+                    <option value="{{ opcion }}">{{ opcion }}</option>
+                {% endfor %}
+            </select>
+
+        {% elif campo.tipo == 'file' %}
+            <input type="file" name="{{ campo.nombre }}" multiple>
+        {% endif %}
+
+        <br><br>
+    {% endfor %}
+
+    <button type="submit">Enviar solicitud</button>
+</form>

@@ -1,0 +1,33 @@
+{% extends 'blank.html' %}
+
+{% block contenido %}       
+
+    <h2>Mis Solicitudes</h2>
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Folio</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Detalles</th>
+        </tr>
+
+        {% for s in solicitudes %}
+        <tr>
+            <td>{{ s.folio }}</td>
+            <td>{{ s.tipo_solicitud.nombre }}</td>
+            <td>{{ s.fecha_creacion|date:"d/m/Y H:i" }}</td>
+            <td>{{ s.estado }}</td>
+            <td>
+                <a href="{% url 'detalle_solicitud' s.id %}">Ver detalle</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Aún no has creado solicitudes.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+{% endblock contenido %}

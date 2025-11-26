@@ -1,0 +1,41 @@
+{% extends 'blank.html' %}
+{% load split_filters %}
+
+{% block contenido %}
+<h2>Crear nueva solicitud de: {{ tipo.nombre }}</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% for campo in campos %}
+
+        <label>{{ campo.etiqueta }}</label><br>
+
+        {% if campo.tipo == "textarea" %}
+            <textarea name="{{ campo.nombre }}"></textarea>
+
+        {% elif campo.tipo == "select" %}
+            <select name="{{ campo.nombre }}">
+                {% for opcion in campo.opciones|split:"," %}
+                    <option value="{{ opcion }}">{{ opcion }}</option>
+                {% endfor %}
+            </select>
+
+        {% else %}
+            <input 
+                type="{{ campo.tipo }}" 
+                name="{{ campo.nombre }}"
+                {% if campo.tipo == 'file' and campo.cantidad_archivos > 1 %}
+                    multiple
+                {% endif %}
+            >
+        {% endif %}
+
+        <br><br>
+
+    {% endfor %}
+
+    <button type="submit">Enviar solicitud</button>
+</form>
+
+{% endblock contenido %}

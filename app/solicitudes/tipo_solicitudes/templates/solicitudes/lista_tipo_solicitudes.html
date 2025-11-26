@@ -1,0 +1,10 @@
+<h2>Tipos de Solicitudes Disponibles</h2>
+
+<ul>
+{% for tipo in tipo_solicitudes %}
+    <li>
+        <strong>{{ tipo.nombre }}</strong>  
+        <a href="{% url 'crear_solicitud' tipo.id %}">Crear solicitud</a>
+    </li>
+{% endfor %}
+</ul>

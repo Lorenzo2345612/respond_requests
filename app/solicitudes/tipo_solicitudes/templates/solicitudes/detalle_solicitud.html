@@ -1,0 +1,24 @@
+<h2>Solicitud {{ solicitud.folio }}</h2>
+
+<h3>Datos Capturados</h3>
+<ul>
+    {% for r in respuestas %}
+        <li>
+            <strong>{{ r.campo.etiqueta }}:</strong> {{ r.valor }}
+
+            {% for arch in r.archivos.all %}
+                <br><a href="{{ arch.archivo.url }}" download>{{ arch.nombre }}</a>
+            {% endfor %}
+        </li>
+    {% endfor %}
+</ul>
+
+<h3>Seguimiento</h3>
+<ul>
+    {% for seg in seguimientos %}
+        <li>
+            <strong>{{ seg.get_estatus_display }}</strong> - {{ seg.observaciones }} 
+            <br><em>{{ seg.fecha_creacion }}</em>
+        </li>
+    {% endfor %}
+</ul>

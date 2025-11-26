@@ -1,0 +1,133 @@
+{% extends 'blank.html' %}
+{% load static %}
+{% load extra_filters %}
+
+{% block contenido %}
+<div class="container-fluid">
+    <h1 class="mb-4">Crear Nueva Solicitud</h1>
+    
+    {% if not tipo_seleccionado %}
+    <!-- Seleccionar tipo de solicitud -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Selecciona el tipo de solicitud</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for tipo in tipos_disponibles %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ tipo.nombre }}</h5>
+                            <p class="card-text">{{ tipo.descripcion }}</p>
+                            <a href="?tipo={{ tipo.id }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Crear solicitud
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No hay tipos de solicitud disponibles en este momento.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Formulario de solicitud -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {{ formulario_solicitud.nombre }}
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if formulario_solicitud.descripcion %}
+            <div class="alert alert-info">
+                {{ formulario_solicitud.descripcion }}
+            </div>
+            {% endif %}
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% for campo in campos %}
+                <div class="form-group mb-3">
+                    <label for="campo_{{ campo.id }}" class="form-label">
+                        {{ campo.etiqueta }}
+                        {% if campo.requerido %}
+                        <span class="text-danger">*</span>
+                        {% endif %}
+                    </label>
+                    
+                    {% if campo.tipo == 'text' %}
+                        <input type="text" 
+                               class="form-control" 
+                               id="campo_{{ campo.id }}" 
+                               name="campo_{{ campo.id }}"
+                               {% if campo.requerido %}required{% endif %}>
+                    
+                    {% elif campo.tipo == 'textarea' %}
+                        <textarea class="form-control" 
+                                  id="campo_{{ campo.id }}" 
+                                  name="campo_{{ campo.id }}" 
+                                  rows="4"
+                                  {% if campo.requerido %}required{% endif %}></textarea>
+                    
+                    {% elif campo.tipo == 'number' %}
+                        <input type="number" 
+                               class="form-control" 
+                               id="campo_{{ campo.id }}" 
+                               name="campo_{{ campo.id }}"
+                               {% if campo.requerido %}required{% endif %}>
+                    
+                    {% elif campo.tipo == 'date' %}
+                        <input type="date" 
+                               class="form-control" 
+                               id="campo_{{ campo.id }}" 
+                               name="campo_{{ campo.id }}"
+                               {% if campo.requerido %}required{% endif %}>
+                    
+                    {% elif campo.tipo == 'select' %}
+                        <select class="form-control" 
+                                id="campo_{{ campo.id }}" 
+                                name="campo_{{ campo.id }}"
+                                {% if campo.requerido %}required{% endif %}>
+                            <option value="">Selecciona una opción</option>
+                            {# CORREGIDO: usar filtro split en vez de .split ',' en el for #}
+                            {% for opcion in campo.opciones|split:"," %}
+                            <option value="{{ opcion }}">{{ opcion }}</option>
+                            {% endfor %}
+                        </select>
+                    
+                    {% elif campo.tipo == 'file' %}
+                        <input type="file" 
+                               class="form-control" 
+                               id="campo_{{ campo.id }}" 
+                               name="campo_{{ campo.id }}"
+                               multiple
+                               {% if campo.requerido %}required{% endif %}>
+                        <small class="form-text text-muted">
+                            Puedes subir hasta {{ campo.cantidad_archivos }} archivo(s)
+                        </small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                <div class="d-flex justify-content-start gap-2 mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Enviar Solicitud
+                    </button>
+                    <a href="{% url 'crear_solicitud_usuario' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock contenido %}

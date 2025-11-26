@@ -1,0 +1,43 @@
+{% extends 'blank.html' %}
+
+{% block contenido %}
+    <h2>Detalle de la Solicitud {{ solicitud.folio }}</h2>
+
+    <h3>Tipo: {{ solicitud.tipo_solicitud.nombre }}</h3>
+    <p>Fecha: {{ solicitud.fecha_creacion|date:"d/m/Y H:i" }}</p>
+
+    <hr>
+
+    <h3>Respuestas del formulario:</h3>
+    <ul>
+        {% for r in respuestas %}
+            <li>
+                <strong>{{ r.campo.etiqueta }}:</strong> {{ r.valor }}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h3>Archivos Adjuntos:</h3>
+    <ul>
+        {% for a in archivos %}
+            <li><a href="{{ a.archivo.url }}" download>{{ a.nombre }}</a></li>
+        {% empty %}
+            <li>No hay archivos adjuntos</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h3>Seguimiento:</h3>
+    <ul>
+        {% for s in seguimientos %}
+            <li>
+                <strong>{{ s.fecha_creacion|date:"d/m/Y H:i" }}:</strong> {{ s.descripcion }}
+            </li>
+        {% empty %}
+            <li>No hay seguimiento aún.</li>
+        {% endfor %}
+    </ul>
+{% endblock contenido %}    
