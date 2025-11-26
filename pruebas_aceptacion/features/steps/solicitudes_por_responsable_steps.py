@@ -37,7 +37,11 @@ def step_impl(context):
                 tipo_solicitud=tipo,
                 folio=f"FOLIO-{resp}-{i+1}"
             )
-            SeguimientoSolicitud.objects.create(solicitud=solicitud, estatus='1')
+            SeguimientoSolicitud.objects.create(
+                solicitud=solicitud,
+                estatus='1',
+                observaciones='Seguimiento inicial'
+            )
 
 @then("debo ver una tabla que muestre el responsable y el total asignado")
 def step_impl(context):

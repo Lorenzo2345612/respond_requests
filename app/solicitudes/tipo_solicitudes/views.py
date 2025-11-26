@@ -238,14 +238,23 @@ def metricas(request):
     labels = [t['tipo_solicitud__nombre'] for t in tipo_list]
     data_vals = [t['count'] for t in tipo_list]
 
+    # Obtener el último estatus de cada solicitud desde SeguimientoSolicitud
+    from django.db.models import OuterRef, Subquery
+    
+    # Subconsulta para obtener el último seguimiento de cada solicitud
+    ultimo_seguimiento = SeguimientoSolicitud.objects.filter(
+        solicitud=OuterRef('pk')
+    ).order_by('-fecha_creacion')
+    
     status_counts_query = (
         Solicitud.objects
-        .values('estatus')
+        .annotate(ultimo_estatus=Subquery(ultimo_seguimiento.values('estatus')[:1]))
+        .values('ultimo_estatus')
         .annotate(count=Count('id'))
-        .order_by('estatus')
+        .order_by('ultimo_estatus')
     )
 
-    status_counts = {item['estatus']: item['count'] for item in status_counts_query}
+    status_counts = {item['ultimo_estatus']: item['count'] for item in status_counts_query if item['ultimo_estatus']}
 
     status_map = dict(ESTATUS)
     status_series = [{
@@ -254,34 +263,59 @@ def metricas(request):
         'count': status_counts.get(code, 0)
     } for code, _ in ESTATUS]
 
-    # --- CORRECCION FINAL: Cálculo del promedio de resolución ---
-    promedio = None
-    total_minutes = 0
-    resolved_solicitudes = Solicitud.objects.filter(estatus='3')
-    resolved_count = resolved_solicitudes.count()
-
-    if resolved_count > 0:
-        for solicitud in resolved_solicitudes:
-            # Asumimos que el último seguimiento de estatus '3' es la fecha de resolución
-            last_seguimiento = SeguimientoSolicitud.objects.filter(
-                solicitud=solicitud, estatus='3'
-            ).order_by('-fecha_creacion').first()
-
-            if last_seguimiento:
-                delta = last_seguimiento.fecha_creacion - solicitud.fecha_creacion
-                total_minutes += delta.total_seconds() / 60
+    # Cálculo del promedio de resolución basado en SeguimientoSolicitud
+    promedio_resolucion = None
+    
+    # Obtener todas las solicitudes que tienen un seguimiento con estatus '3' (Terminada)
+    solicitudes_terminadas = Solicitud.objects.filter(
+        seguimientos__estatus='3'
+    ).distinct()
+    
+    if solicitudes_terminadas.exists():
+        total_seconds = 0
+        count = 0
         
-        if total_minutes > 0:
-            avg_minutes = total_minutes / resolved_count
-            hours = int(avg_minutes // 60)
-            minutes = int(avg_minutes % 60)
-            promedio = f"{hours}:{minutes:02d}:00"
+        for solicitud in solicitudes_terminadas:
+            # Obtener el primer seguimiento (inicio) y el último con estatus '3' (terminado)
+            primer_seguimiento = solicitud.seguimientos.order_by('fecha_creacion').first()
+            seguimiento_terminado = solicitud.seguimientos.filter(estatus='3').order_by('-fecha_creacion').first()
+            
+            if primer_seguimiento and seguimiento_terminado:
+                # Usar fecha_terminacion si está disponible, sino usar fecha_creacion
+                fecha_fin = seguimiento_terminado.fecha_terminacion if seguimiento_terminado.fecha_terminacion else seguimiento_terminado.fecha_creacion
+                # Calcular tiempo desde el primer seguimiento hasta que se terminó
+                delta = fecha_fin - primer_seguimiento.fecha_creacion
+                total_seconds += delta.total_seconds()
+                count += 1
+        
+        if count > 0:
+            avg_seconds = total_seconds / count
+            
+            # Formatear el tiempo de forma más precisa
+            if avg_seconds < 60:
+                # Menos de 1 minuto
+                promedio_resolucion = f"{int(avg_seconds)}s"
+            elif avg_seconds < 3600:
+                # Menos de 1 hora
+                minutes = int(avg_seconds / 60)
+                seconds = int(avg_seconds % 60)
+                promedio_resolucion = f"{minutes}min {seconds}s"
+            elif avg_seconds < 86400:
+                # Menos de 1 día
+                hours = int(avg_seconds / 3600)
+                minutes = int((avg_seconds % 3600) / 60)
+                promedio_resolucion = f"{hours}h {minutes}min"
+            else:
+                # 1 día o más
+                days = int(avg_seconds / 86400)
+                hours = int((avg_seconds % 86400) / 3600)
+                promedio_resolucion = f"{days}d {hours}h"
 
     context = {
         'total_tickets': total_tickets,
         'solicitudes_por_tipo': tipo_list,
         'solicitudes_por_responsable': responsable_series,
-        'promedio_resolucion': promedio,
+        'promedio_resolucion': promedio_resolucion,
         'labels_json': json.dumps(labels),
         'data_json': json.dumps(data_vals),
         'status_series': status_series,

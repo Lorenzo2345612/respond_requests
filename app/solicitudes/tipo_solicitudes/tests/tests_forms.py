@@ -180,7 +180,6 @@ class TestFormSolicitud(TestCase):
 
         self.valid_data = {
             'tipo_solicitud': self.tipo_solicitud.pk,
-            'estatus': '1',
         }
 
     def test_solicitud_valida(self):

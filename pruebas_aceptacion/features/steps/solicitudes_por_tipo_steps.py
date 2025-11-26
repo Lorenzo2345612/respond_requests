@@ -34,7 +34,8 @@ def step_impl(context):
             )
             SeguimientoSolicitud.objects.create(
                 solicitud=solicitud,
-                estatus='1'
+                estatus='1',
+                observaciones='Seguimiento inicial'
             )
 
 @when(u'ingreso a la página de métricas')

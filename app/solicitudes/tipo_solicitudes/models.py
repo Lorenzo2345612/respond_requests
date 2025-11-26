@@ -56,7 +56,6 @@ class Solicitud(models.Model):
     tipo_solicitud = models.ForeignKey(TipoSolicitud, on_delete=models.CASCADE)
     folio = models.CharField(max_length=20, unique=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    estatus = models.CharField(max_length=1, choices=ESTATUS, default='1') # <--- CAMPO AÑADIDO
 
     def __str__(self):
         return f"{self.folio}"
@@ -84,5 +83,6 @@ class ArchivoAdjunto(models.Model):
 class SeguimientoSolicitud(models.Model):
     solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE, related_name='seguimientos')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_terminacion = models.DateTimeField(null=True, blank=True)
     observaciones = models.TextField(blank=True)
     estatus = models.CharField(max_length=1, choices=ESTATUS)

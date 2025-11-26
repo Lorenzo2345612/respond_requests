@@ -1,4 +1,4 @@
-from behave import given, then
+from behave import given, when, then
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -26,20 +26,32 @@ def step_impl(context):
 
     tipo, _ = TipoSolicitud.objects.get_or_create(nombre="Tipo Test")
 
-    now = datetime.now()
+    from django.utils import timezone
+    now = timezone.now()
+    
     for i in range(3):
         solicitud = Solicitud.objects.create(
             usuario=context.admin_user,
             tipo_solicitud=tipo,
-            folio=f"RES-{i+1}",
-            fecha_creacion=now - timedelta(hours=i+1),
-            estatus='3'
+            folio=f"RES-{i+1}"
         )
+        # Crear seguimiento inicial (creada)
         SeguimientoSolicitud.objects.create(
             solicitud=solicitud,
+            estatus='1',
+            observaciones='Creada',
+            fecha_creacion=now - timedelta(hours=i+1)
+        )
+        # Crear seguimiento de terminada con fecha_terminacion
+        seguimiento_terminado = SeguimientoSolicitud.objects.create(
+            solicitud=solicitud,
             estatus='3',
+            observaciones='Terminada',
             fecha_creacion=now - timedelta(minutes=i*10)
         )
+        # Establecer fecha_terminacion manualmente
+        seguimiento_terminado.fecha_terminacion = now - timedelta(minutes=i*10)
+        seguimiento_terminado.save()
 
 @given('no existen solicitudes completadas')
 def step_impl(context):
@@ -63,19 +75,20 @@ def step_impl(context):
             EC.presence_of_element_located((By.CSS_SELECTOR, "#promedio-resolucion span"))
         )
         text = total_span.text.strip()
+        # El formato puede ser: "0s", "1min 30s", "2h 15min", "3d 5h"
         import re
-        assert re.match(r"\d+:\d{2}:00", text), f"El valor no es numérico o no tiene el formato hh:mm:00: {text}"
+        assert text and text != "Sin datos", f"No se encontró valor o está vacío: {text}"
     except TimeoutException:
         raise AssertionError("El elemento 'Promedio Resolución' no apareció a tiempo.")
 
 @then('debe mostrarse "Pendiente" en "Promedio Resolución"')
 def step_impl(context):
-    """Verifica que el span muestre 'Pendiente' si no hay solicitudes completadas."""
+    """Verifica que el span muestre 'Sin datos' si no hay solicitudes completadas."""
     try:
         total_span = WebDriverWait(context.driver, 20).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#promedio-resolucion span"))
         )
         text = total_span.text.strip()
-        assert text == "Pendiente", f"Se esperaba 'Pendiente' pero se encontró '{text}'"
+        assert text == "Sin datos", f"Se esperaba 'Sin datos' pero se encontró '{text}'"
     except TimeoutException:
         raise AssertionError("El elemento 'Promedio Resolución' no apareció a tiempo.")

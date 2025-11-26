@@ -35,10 +35,13 @@ def step_impl(context):
             solicitud = Solicitud.objects.create(
                 usuario=context.admin_user,
                 tipo_solicitud=tipo,
-                folio=f"FOLIO-{estatus}-{i}",
-                estatus=estatus
+                folio=f"FOLIO-{estatus}-{i}"
             )
-            SeguimientoSolicitud.objects.create(solicitud=solicitud, estatus=estatus)
+            SeguimientoSolicitud.objects.create(
+                solicitud=solicitud,
+                estatus=estatus,
+                observaciones=f"Seguimiento con estatus {estatus}"
+            )
 
 @when(u'ingreso al dashboard de métricas')
 def step_impl(context):
