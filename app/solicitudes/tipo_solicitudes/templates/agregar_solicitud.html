@@ -1,14 +1,15 @@
 {% extends 'blank.html' %}
 
 {% block contenido %}
-<h1>Agregar tipo de solicitudes</h1>
+<div class="container-fluid">
+    <h1>Agregar tipo de solicitudes</h1>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Guardar</button>
-    <a href="{% url 'lista_tipo_solicitudes' %}" class="btn btn-secondary">Cancelar</a>
-</form>
-
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="{% url 'lista_tipo_solicitudes' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
 {% endblock contenido %}
 

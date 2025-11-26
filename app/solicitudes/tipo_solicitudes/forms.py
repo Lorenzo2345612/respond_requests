@@ -6,6 +6,12 @@ class FormTipoSolicitud(forms.ModelForm):
         model = TipoSolicitud
         fields = '__all__'
         
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class':'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class':'form-control', 'rows':6, 'style':'resize: none;'}),
+            'responsable': forms.Select(attrs={'class':'form-control'}),
+        }
+        
 class FormFormularioSolicitud(forms.ModelForm):
     class Meta:
         model = FormularioSolicitud
@@ -14,6 +20,11 @@ class FormFormularioSolicitud(forms.ModelForm):
             'tipo_solicitud': 'Tipo de Solicitud Asociada',
             'nombre': 'Título del Formulario',
             'descripcion': 'Instrucciones o Descripción'
+        }
+        widgets = {
+            'tipo_solicitud': forms.Select(attrs={'class':'form-control'}),
+            'nombre': forms.TextInput(attrs={'class':'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class':'form-control', 'rows':6, 'style':'resize: none;'}),
         }
         
 class FormCampoFormulario(forms.ModelForm):
@@ -28,6 +39,16 @@ class FormCampoFormulario(forms.ModelForm):
             'opciones': 'Opciones (solo para select)',
             'cantidad_archivos': 'Cantidad de archivos permitidos',
             'orden': 'Posición en el formulario',
+        }
+        
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class':'form-control'}),
+            'etiqueta': forms.TextInput(attrs={'class':'form-control'}),
+            'tipo': forms.Select(attrs={'class':'form-control'}),
+            'requerido' :forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'opciones': forms.Textarea(attrs={'class':'form-control', 'rows':6}),
+            'cantidad_archivos': forms.NumberInput(attrs={'class':'form-control'}),
+            'orden': forms.NumberInput(attrs={'class':'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):

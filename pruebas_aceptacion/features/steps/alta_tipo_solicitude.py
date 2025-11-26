@@ -1,5 +1,7 @@
 from behave import when, then, given
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 
 @given(u'que ingreso al sistema')
@@ -9,7 +11,7 @@ def step_impl(context):
 
 @given(u'seleccion el menú Tipo de solicitudes')
 def step_impl(context):
-    context.driver.get(f"{context.url}/tipo-solicitud/")
+    context.driver.get(f"{context.url}/tipo-solicitud/agregar/")
     time.sleep(1)
 
 
@@ -35,14 +37,15 @@ def step_impl(context):
 def step_impl(context, nombre):
     time.sleep(1)
     
-    if '/tipo-solicitud/lista/' not in context.driver.current_url:
-        context.driver.get(f"{context.url}/tipo-solicitud/lista/")
+    if not context.driver.current_url.endswith('/tipo-solicitud/'):
+        context.driver.get(f"{context.url}/tipo-solicitud/")
         time.sleep(1)
     else:
         context.driver.refresh()
         time.sleep(1)
     
-    body = context.driver.find_element(By.ID, 'bodyTipoSolicitudes')
+    wait = WebDriverWait(context.driver, 10)
+    body = wait.until(EC.presence_of_element_located((By.ID, 'bodyTipoSolicitudes')))
     trs = body.find_elements(By.TAG_NAME, 'tr')
     tipo_solicitud = []
     for tr in trs:

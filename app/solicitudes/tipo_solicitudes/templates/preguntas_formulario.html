@@ -1,63 +1,65 @@
 {% extends 'blank.html' %}
 
 {% block contenido %}
-
-<h1>Configurar campos del formulario: {{ formulario.nombre }}</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-
-    <div class="d-flex justify-content-start gap-2">
-        <button class="btn btn-primary" type="submit">
-            Agregar campo
-        </button>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Campos del formulario: {{ formulario.nombre }}</h1>
         
         <a href="{% url 'lista_formularios' %}" class="btn btn-secondary">
-            Cancelar
+            Regresar
         </a>
     </div>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
 
-<hr>
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-primary" type="submit">
+                Agregar campo
+            </button>
+        </div>
+    </form>
 
-<h3>Campos agregados</h3>
+    <hr>
 
-{% if campos %}
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Orden</th>
-            <th>Etiqueta</th>
-            <th>Tipo</th>
-            <th>Requerido</th>
-            <th>Opciones</th>
-            <th>Archivo(s)</th>
-            <th>Acción</th>
-        </tr>
-    </thead>
+    <h3>Campos agregados</h3>
 
-    <tbody>
-        {% for campo in campos %}
-        <tr>
-            <td>{{ campo.orden }}</td>
-            <td>{{ campo.etiqueta }}</td>
-            <td>{{ campo.get_tipo_display }}</td>
-            <td>{{ campo.requerido }}</td>
-            <td>{{ campo.opciones }}</td>
-            <td>{{ campo.cantidad_archivos }}</td>
-            <td>
-                <a href="{% url 'eliminar_campo' campo.id %}" class="btn btn-danger btn-sm">
-                    Eliminar
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No hay campos agregados todavía.</p>
-{% endif %}
+    {% if campos %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Orden</th>
+                <th>Etiqueta</th>
+                <th>Tipo</th>
+                <th>Requerido</th>
+                <th>Opciones</th>
+                <th>Archivo(s)</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
 
+        <tbody>
+            {% for campo in campos %}
+            <tr>
+                <td>{{ campo.orden }}</td>
+                <td>{{ campo.etiqueta }}</td>
+                <td>{{ campo.get_tipo_display }}</td>
+                <td>{{ campo.requerido }}</td>
+                <td>{{ campo.opciones }}</td>
+                <td>{{ campo.cantidad_archivos }}</td>
+                <td>
+                    <a href="{% url 'eliminar_campo' campo.id %}" class="btn btn-danger btn-sm">
+                        Eliminar
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay campos agregados todavía.</p>
+    {% endif %}
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

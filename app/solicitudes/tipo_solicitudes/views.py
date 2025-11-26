@@ -28,11 +28,10 @@ def bienvenida(request):
 @login_required
 def lista_solicitudes(request):
     funciones_avanzadas = FuncionesAvanzadas()
-    resultado = funciones_avanzadas.calculo_extremo(2, 2)
 
     context = {
         'tipo_solicitudes': TipoSolicitud.objects.all(),
-        'resultado': resultado
+        'resultado': TipoSolicitud.objects.all().count
     }
     return render(request, 'lista_tipo_solicitudes.html', context)
 

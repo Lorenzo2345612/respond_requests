@@ -1,29 +1,35 @@
 {% extends 'blank.html' %}
 
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Tipo de solicitudes</h1>
-    <a href="{% url 'agrega_solicitud' %}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Agregar
-    </a>
-</div>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>Nombre</th>
-            <th>Descripción</th>
-        </tr>
-    </thead>
-    <tbody id="bodyTipoSolicitudes">
-        {% for tipo_solicitud in tipo_solicitudes %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Tipo de solicitudes</h1>
+        <a href="{% url 'agrega_solicitud' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Agregar
+        </a>
+    </div>
+    <h5>Resultado: {{resultado}}</h5>
+    <table class="table">
+        <thead>
             <tr>
-                <td>{{ tipo_solicitud.nombre }}</td>
-                <td>{{ tipo_solicitud.descripcion }}</td>
+                <th>Nombre</th>
+                <th>Descripción</th>
             </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+        </thead>
+        <tbody id="bodyTipoSolicitudes">
+            {% if resultado == 0 %}
+                <tr class="text-center">
+                    <td colspan="2"><em>No hay tipos de solicitud</em></td>
+                </tr>
+            {% endif %}
+            {% for tipo_solicitud in tipo_solicitudes %}
+                <tr>
+                    <td>{{ tipo_solicitud.nombre }}</td>
+                    <td>{{ tipo_solicitud.descripcion }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock contenido %}
 

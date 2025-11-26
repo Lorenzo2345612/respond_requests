@@ -348,11 +348,14 @@ def step_impl(context):
         except:
             pass
     
+    wait = WebDriverWait(context.driver, 10)
     try:
-        agregar_btn = context.driver.find_element(By.XPATH, "//button[contains(text(), 'Agregar campo')]")
+        agregar_btn = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Agregar campo')]")))
     except:
-        agregar_btn = context.driver.find_element(By.XPATH, "//button[@type='submit']")
-    agregar_btn.click()
+        agregar_btn = wait.until(EC.presence_of_element_located((By.XPATH, "//button[@type='submit']")))
+    context.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", agregar_btn)
+    time.sleep(0.5)
+    context.driver.execute_script("arguments[0].click();", agregar_btn)
     time.sleep(2)
 
 
@@ -507,7 +510,7 @@ def step_impl(context, cantidad):
 @then(u'veo un mensaje de error indicando que el nombre es obligatorio')
 def step_impl(context):
     # Verificar que permanece en la página
-    assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url
     
     try:
         error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
@@ -519,7 +522,7 @@ def step_impl(context):
 
 @then(u'veo un mensaje de error indicando que la etiqueta es obligatoria')
 def step_impl(context):
-    assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url
     
     try:
         error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
@@ -531,7 +534,7 @@ def step_impl(context):
 
 @then(u'veo un mensaje de error indicando que debe seleccionar un tipo de campo')
 def step_impl(context):
-    assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url
     
     try:
         error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
@@ -543,7 +546,7 @@ def step_impl(context):
 
 @then(u'veo un mensaje de error indicando que el orden ya está en uso')
 def step_impl(context):
-    assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url
     
     try:
         error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
@@ -556,13 +559,13 @@ def step_impl(context):
 @then(u'veo un mensaje de error o advertencia sobre las opciones faltantes')
 def step_impl(context):
     # Este puede ser un caso donde la validación no sea tan estricta
-    assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url
     time.sleep(1)
 
 
 @then(u'permanezco en la página de agregar preguntas')
 def step_impl(context):
-    assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url, \
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url, \
         f"No permanece en la página de campos. URL actual: {context.driver.current_url}"
     time.sleep(0.5)
 
@@ -589,7 +592,7 @@ def step_impl(context, etiqueta):
 
 @then(u'veo una confirmación de eliminación exitosa')
 def step_impl(context):
-    assert '/tipo-solicitud/formularios/campos/' in context.driver.current_url
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url
     time.sleep(0.5)
 
 
