@@ -1,0 +1,482 @@
+{% extends "base_atender_solicitudes.html" %}
+{% block contenido %}
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-container .bi-search {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .search-input {
+            padding-left: 2.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #dee2e6;
+            height: 48px;
+            font-size: 0.938rem;
+        }
+
+        .card-rounded {
+            border-radius: 0.5rem !important;
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid #dee2e6;
+            background: white;
+            color: #495057;
+            font-weight: 500;
+            font-size: 0.938rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none !important;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: #f0f4ff;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .custom-table {
+            margin-bottom: 0;
+        }
+        
+        .custom-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .custom-table thead th {
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #495057;
+            padding: 1rem 1.25rem;
+            border: none;
+        }
+        
+        .custom-table tbody tr {
+            border-bottom: 1px solid #f1f3f5;
+            transition: background-color 0.15s;
+        }
+        
+        .custom-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .custom-table tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        .custom-table tbody td {
+            padding: 1.25rem;
+            vertical-align: middle;
+            font-size: 0.938rem;
+            color: #212529;
+        }
+        
+        .folio-cell {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.875rem;
+        }
+        
+        .badge-status {
+            padding: 0.375rem 0.875rem;
+            font-size: 0.813rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+        
+        .badge-creada {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge-proceso {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-terminada {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .badge-cancelada {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-action {
+            background: white;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-action:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            transform: translateX(2px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Agregando estilos para la paginación */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem;
+            border-top: 1px solid #f1f3f5;
+            background: white;
+        }
+        
+        .pagination-info {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        
+        .pagination {
+            margin: 0;
+            gap: 0.25rem;
+        }
+        
+        .page-link {
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 0.5rem 0.875rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        
+        .page-link:hover {
+            background: #f8f9fa;
+            border-color: #dee2e6;
+            color: #495057;
+        }
+        
+        .page-item.active .page-link {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        .page-item.disabled .page-link {
+            background: white;
+            border-color: #dee2e6;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        
+        .items-per-page {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .items-per-page select {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        
+        .items-per-page select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+        }
+        
+        @media (max-width: 250px) {
+            
+            .custom-table {
+                font-size: 0.875rem;
+            }
+            
+            .custom-table thead th,
+            .custom-table tbody td {
+                padding: 0.875rem;
+            }
+            
+            .pagination-container {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .pagination {
+                justify-content: center;
+            }
+            
+            .pagination-info {
+                text-align: center;
+            }
+            
+            .items-per-page {
+                justify-content: center;
+            }
+        }
+    </style>
+    <!-- Main Content -->
+    <div class="container pb-5">
+         <!-- Header -->
+    <div class="bg-white shadow-sm border border-gray-200 px-3 py-4 mb-4 max-w-full card-rounded">
+            <h3 class="text-md font-semibold text-gray-900">Seguimiento de solicitudes</h3>
+            <p class="text-sm text-gray-500 mt-1">
+                Accede a la información detallada de cada seguimiento y actualización
+            </p>
+        </div>
+        <!-- Search Bar -->
+        <form method="get" class="search-container d-flex align-items-center" style="gap: 0.5rem;">
+            <div class="position-relative flex-grow-1">
+                <i class="bi bi-search"></i>
+                <input 
+                    type="text" 
+                    class="form-control search-input" 
+                    name="search"
+                    value="{{ search|default:'' }}"
+                    placeholder="Buscar por folio, usuario o tipo..."
+                    id="search"
+                >
+            </div>
+            {% if estatus_activo != 'todos' %}
+                <input type="hidden" name="estatus" value="{{ estatus_activo }}" id="estatus">
+            {% endif %}
+            <button type="submit" class="btn btn-primary" id="search-button">Buscar</button>
+        </form>
+
+        <!-- Filter Buttons -->
+        <div class="filter-buttons">
+            <a href="?" class="filter-btn {% if estatus_activo == 'todos' %}active{% endif %}" id="btn-todos">
+                Todos <span class="badge bg-secondary ms-1">{{ conteos.todos }}</span>
+            </a>
+            <a href="?estatus=1" class="filter-btn {% if estatus_activo == '1' %}active{% endif %}" id="btn-creada">
+                Creada <span class="badge bg-secondary ms-1">{{ conteos.1 }}</span>
+            </a>
+            <a href="?estatus=2" class="filter-btn {% if estatus_activo == '2' %}active{% endif %}" id="btn-en-proceso">
+                En Proceso <span class="badge bg-secondary ms-1">{{ conteos.2 }}</span>
+            </a>
+            <a href="?estatus=3" class="filter-btn {% if estatus_activo == '3' %}active{% endif %}" id="btn-terminada">
+                Terminada <span class="badge bg-secondary ms-1">{{ conteos.3 }}</span>
+            </a>
+            <a href="?estatus=4" class="filter-btn {% if estatus_activo == '4' %}active{% endif %}" id="btn-cancelada">
+                Cancelada <span class="badge bg-secondary ms-1">{{ conteos.4 }}</span>
+            </a>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table class="table custom-table" id="solicitudesTable">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Usuario</th>
+                        <th>Tipo de Solicitud</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th class="text-end">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for solicitud in solicitudes %}
+                    <tr>
+                        <td class="folio-cell">{{ solicitud.folio }}</td>
+                        {# Muestra el nombre completo, y si no, el username #}
+                        <td>
+                            {% if solicitud.usuario.get_full_name %}
+                                {{ solicitud.usuario.get_full_name }}
+                            {% else %}
+                                {{ solicitud.usuario.username }}
+                            {% endif %}
+                        </td>
+                        <td>{{ solicitud.tipo_solicitud.nombre }}</td>
+                        <td>
+                            {% with seguimiento=solicitud.seguimientos.last %}
+                                {% if seguimiento %}
+                                    {% if seguimiento.estatus == '1' %}
+                                        <span class="badge-status badge-creada">Creada</span>
+                                    {% elif seguimiento.estatus == '2' %}
+                                        <span class="badge-status badge-proceso">En Proceso</span>
+                                    {% elif seguimiento.estatus == '3' %}
+                                        <span class="badge-status badge-terminada">Terminada</span>
+                                    {% elif seguimiento.estatus == '4' %}
+                                        <span class="badge-status badge-cancelada">Cancelada</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge-status badge-creada">Creada</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with seguimiento=solicitud.seguimientos.last %}
+                                {% if seguimiento %}
+                                    {{ seguimiento.fecha_creacion|date:'d/m/Y' }}
+                                {% else %}
+                                    {{ solicitud.fecha_creacion|date:'d/m/Y' }}
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'atender_solicitud' solicitud.id %}" class="btn-action">
+                                Atender
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No hay solicitudes</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <!-- Pagination Controls -->
+             {% if solicitudes.paginator.count > 0 %}
+             <div class="pagination-container" id="paginationContainer">
+                <div class="pagination-info">
+                    Mostrando <strong>{{ solicitudes.start_index }}</strong> a <strong>{{ solicitudes.end_index }}</strong> de <strong>{{ solicitudes.paginator.count }}</strong> resultados
+                </div>
+                {% if solicitudes.paginator.num_pages > 1 %}
+                    <nav aria-label="Navegación de páginas">
+                        <ul class="pagination" id="paginationList">
+                            {% if solicitudes.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ solicitudes.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                                </li>
+                            {% endif %}
+                            
+                                {% with total_pages=solicitudes.paginator.num_pages current_page=solicitudes.number %}
+                                    {% for i in solicitudes.paginator.page_range %}
+                                        {% if i == current_page %}
+                                            <li class="page-item active" aria-current="page">
+                                                <span class="page-link">{{ i }}</span>
+                                            </li>
+                                        {% elif i == 1 or i == total_pages or i >= current_page|add:'-2' and i <= current_page|add:'2' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            
+                            {% if solicitudes.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ solicitudes.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+                <div class="items-per-page">
+                    <label for="itemsPerPage">Por página:</label>
+                    <select id="itemsPerPage" class="form-select">
+                        <option value="5" {% if per_page == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                        <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                        <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                    </select>
+                </div>
+             </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        document.getElementById('itemsPerPage').addEventListener('change', function() {
+            // Obtener el valor seleccionado
+            const url = new URL(window.location.href);
+            //Establecer el nuevo parámetro 'per_page'
+            url.searchParams.set('per_page', this.value);
+            // Reiniciar a la primera página
+            url.searchParams.set('page', 1);
+            // Redirigir a la nueva URL
+            window.location.href = url.toString();
+        });
+
+    </script>
+{% endblock contenido %}

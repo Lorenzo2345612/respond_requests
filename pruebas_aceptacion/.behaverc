@@ -1,2 +1,8 @@
 [behave]
-lang: es
+lang = es
+show_skipped = false
+show_timings = true
+format = progress
+color = true
+stderr_capture = false
+stdout_capture = false

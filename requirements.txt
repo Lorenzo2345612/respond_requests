@@ -3,3 +3,8 @@ mysqlclient
 pillow
 reportlab
 matplotlib
+openpyxl
+reportlab
+matplotlib
+behave
+selenium

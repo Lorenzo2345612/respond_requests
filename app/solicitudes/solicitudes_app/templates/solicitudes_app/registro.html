@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Registro - Sistema de Solicitudes UAZ</title>
+    <meta name="description" content="Sistema de gestión de solicitudes">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Nunito.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/fontawesome-all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bss-overrides.css' %}">
+</head>
+<body class="bg-gradient-primary">
+    <div class="container">
+        <div class="card shadow-lg my-5 o-hidden border-0">
+            <div class="card-body p-0">
+                <div class="row">
+                    <div class="col-lg-5 d-none d-lg-flex">
+                        <div class="flex-grow-1 bg-register-image" style="background-image: url('{% static 'img/dogs/image2.jpeg' %}');"></div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h4 class="text-dark mb-4">¡Crea una cuenta!</h4>
+                            </div>
+                            
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            <form class="user" method="post">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3 row">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        {{ form.first_name }}
+                                        {% if form.first_name.errors %}
+                                            <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-sm-6">
+                                        {{ form.last_name }}
+                                        {% if form.last_name.errors %}
+                                            <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small">Rol</label>
+                                    {{ form.rol }}
+                                    {% if form.rol.errors %}
+                                        <div class="text-danger small mt-1">{{ form.rol.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.matricula }}
+                                    {% if form.matricula.errors %}
+                                        <div class="text-danger small mt-1">{{ form.matricula.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.telefono }}
+                                    {% if form.telefono.errors %}
+                                        <div class="text-danger small mt-1">{{ form.telefono.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.area }}
+                                    {% if form.area.errors %}
+                                        <div class="text-danger small mt-1">{{ form.area.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3 row">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        {{ form.password1 }}
+                                        {% if form.password1.errors %}
+                                            <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-sm-6">
+                                        {{ form.password2 }}
+                                        {% if form.password2.errors %}
+                                            <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <button class="btn btn-primary d-block w-100 btn-user" type="submit">Registrar Cuenta</button>
+                                <hr>
+                            </form>
+                            
+                            <div class="text-center"><a class="small" href="#">¿Olvidaste tu contraseña?</a></div>
+                            <div class="text-center"><a class="small" href="{% url 'solicitudes_app:login' %}">¿Ya tienes cuenta? ¡Inicia sesión!</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/bs-init.js' %}"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
+</body>
+</html>

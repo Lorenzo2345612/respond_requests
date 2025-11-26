@@ -1,0 +1,230 @@
+{% extends 'blank.html' %}
+
+{% block title %}Metricas{% endblock %}
+
+{% block contenido %}
+<div class="container-fluid">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-dark mb-0">Metricas</h3>
+    </div>
+
+    <!-- Métricas principales -->
+    <div class="row">
+        <div class="col-md-6 col-xl-3 mb-4">
+            <div class="card shadow py-2 border-left-primary">
+                <div class="card-body">
+                    <div class="row g-0 align-items-center">
+                        <div class="col me-2">
+                            <div class="text-uppercase text-primary mb-1 fw-bold text-xs"><span>Total de Tickets</span>
+                            </div>
+                            <div class="text-dark mb-0 fw-bold h5" id="total-tickets"><span>{{ total_tickets }}</span>
+                            </div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-ticket-alt fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3 mb-4">
+            <div class="card shadow py-2 border-left-success">
+                <div class="card-body">
+                    <div class="row g-0 align-items-center">
+                        <div class="col me-2">
+                            <div class="text-uppercase text-success mb-1 fw-bold text-xs"><span>Promedio
+                                    Resolución</span></div>
+                            <div class="text-dark mb-0 fw-bold h5" id="promedio-resolucion">
+                                <span>{% if promedio_resolucion %}{{ promedio_resolucion }}{% else %}Pendiente{% endif %}</span>
+                            </div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-clock fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas de datos -->
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Estatus de Solicitudes</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Estatus</th>
+                                <th class="text-end">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if status_series %}
+                            {% for s in status_series %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-secondary">{{ s.label }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <strong>{{ s.count }}</strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">
+                                    <em>No hay datos de estatus</em>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Solicitudes por Tipo</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tipo</th>
+                                <th class="text-end">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in solicitudes_por_tipo %}
+                            <tr>
+                                <td>{{ item.tipo_solicitud__nombre }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">{{ item.count }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">
+                                    <em>No hay solicitudes</em>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Solicitudes por Responsable</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Responsable</th>
+                                <th class="text-end">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in solicitudes_por_responsable %}
+                            <tr>
+                                <td>{{ r.responsable }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-warning text-dark">{{ r.count }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">
+                                    <em>No hay datos</em>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">📈 Gráfico de Solicitudes por Tipo</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-center">
+                    <div style="max-width: 600px; width: 100%;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Chart.js (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    const labels = JSON.parse('{{ labels_json|escapejs|default:"[]" }}');
+    const data = JSON.parse('{{ data_json|escapejs|default:"[]" }}');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Solicitudes por tipo',
+                data: data,
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+</script>
+</div>
+{% endblock contenido %}

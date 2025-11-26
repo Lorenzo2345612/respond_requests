@@ -1,0 +1,174 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from solicitudes_app.decorators import puede_atender_solicitudes
+from tipo_solicitudes.models import Solicitud, SeguimientoSolicitud
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
+# csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from .forms import CerrarSolicitudForm
+from django.db.models import OuterRef, Subquery, Q
+from django.core.paginator import Paginator
+
+
+MATCH_RESPONSABLES = {
+    'control_escolar': '1',
+    'responsable_programa': '2',
+    'responsable_tutorias': '3',
+    'director': '4',
+}
+
+
+@login_required
+@puede_atender_solicitudes
+def atender_solicitud(request, solicitud_id: int):
+    if request.method != 'GET':
+        messages.error(request, 'Método no permitido.')
+        return JsonResponse({'error': 'Metodo no permitido.'}, status=405)
+    solicitud = get_object_or_404(Solicitud, id=solicitud_id)
+    ultimo = solicitud.seguimientos.order_by('-fecha_creacion').first()
+    responsable_rol = MATCH_RESPONSABLES.get(request.user.rol) or "5"
+    if solicitud.tipo_solicitud.responsable != responsable_rol:
+        messages.error(request, 'No tienes permiso para atender esta solicitud.')
+        return redirect('bienvenida')
+    context = {
+        'solicitud': solicitud,
+        'ultimo': ultimo
+    }
+    return render(request, 'atender_solicitud.html', context)
+
+@login_required
+@puede_atender_solicitudes
+def marcar_solicitud_en_proceso(request, solicitud_id: int):
+    if request.method != 'POST':
+        messages.error(request, 'Método no permitido.')
+        # Línea de template comentada (render formulario)
+        # return render(request, 'marcar_en_proceso.html')
+        return JsonResponse({'error': 'Metodo no permitido.'}, status=405)
+    solicitud = get_object_or_404(Solicitud, id=solicitud_id)
+    ultimo = solicitud.seguimientos.order_by('-fecha_creacion').first()
+    responsable_rol = MATCH_RESPONSABLES.get(request.user.rol) or "5"
+    if solicitud.tipo_solicitud.responsable != responsable_rol:
+        messages.error(request, 'No tienes permiso para atender esta solicitud.')
+        return redirect('bienvenida')
+    if not ultimo or ultimo.estatus != '1':
+        messages.error(request, 'No se puede cambiar el estatus: la solicitud no está en estado Creada.')
+        # return redirect('bienvenida')
+        # Regresar JsonResponse por ahora
+        return JsonResponse({'error': 'No se puede cambiar el estatus: la solicitud no está en estado Creada.'}, status=400)
+    SeguimientoSolicitud.objects.create(solicitud=solicitud, estatus='2', observaciones='')
+    messages.success(request, 'La solicitud fue marcada como En proceso.')
+    return redirect('atender_solicitud', solicitud_id=solicitud_id)
+
+@login_required
+@puede_atender_solicitudes
+def cerrar_solicitud(request, solicitud_id: int):
+    solicitud = get_object_or_404(Solicitud, id=solicitud_id)
+    responsable_rol = MATCH_RESPONSABLES.get(request.user.rol) or "5"
+    if solicitud.tipo_solicitud.responsable != responsable_rol:
+        messages.error(request, 'No tienes permiso para atender esta solicitud.')
+        return redirect('bienvenida')
+    ultimo = solicitud.seguimientos.order_by('-fecha_creacion').first()
+    if not ultimo or ultimo.estatus != '2':
+        messages.error(request, 'Solo se puede cerrar si está En proceso.')
+        # return redirect('bienvenida')
+        return JsonResponse({'error': 'Solo se puede cerrar si está En proceso.'}, status=400)
+    if request.method != 'POST':
+        # Línea de template comentada (render formulario)
+        # return render(request, 'cerrar_solicitud.html', {'form': CerrarSolicitudForm()})
+        return JsonResponse({'error': 'Método no permitido.'}, status=405)
+
+    form = CerrarSolicitudForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Formulario inválido. Verifique los datos.')
+        # return redirect('bienvenida')
+        return JsonResponse({'error': form.errors.as_json()}, status=400)
+
+    estatus = form.cleaned_data['estatus']  # normalizado a '3' o '4'
+    observaciones = form.cleaned_data['observaciones'].strip()
+
+    SeguimientoSolicitud.objects.create(
+        solicitud=solicitud,
+        estatus=estatus,
+        observaciones=observaciones
+    )
+    messages.success(request, 'Solicitud cerrada correctamente.')
+    return redirect('atender_solicitud', solicitud_id=solicitud_id)
+
+@login_required
+@puede_atender_solicitudes
+def listar_solicitudes(request):
+    estatus = request.GET.get('estatus')
+    search = (request.GET.get('search') or '').strip()
+    try:
+        # Lee el valor del select, con 10 como default
+        per_page = int(request.GET.get('per_page', 10))
+    except ValueError:
+        per_page = 10
+    
+    # Asegurarse que el valor sea uno de los permitidos
+    if per_page not in [5, 10, 25, 50]:
+        per_page = 10
+    # ------------------------------------------
+
+    responsable_rol = MATCH_RESPONSABLES.get(request.user.rol) or "5"
+
+    # Subquery para obtener el último seguimiento de cada solicitud
+    ult_seguimiento = SeguimientoSolicitud.objects.filter(
+        solicitud=OuterRef('pk')
+    ).order_by('-fecha_creacion')
+
+    solicitudes_qs = Solicitud.objects.annotate(
+        ultimo_estatus=Subquery(ult_seguimiento.values('estatus')[:1])
+    )
+
+    # Filtrar por el rol responsable si aplica (1-4). '5' es para evitar errores
+    if responsable_rol in ['1', '2', '3', '4']:
+        solicitudes_qs = solicitudes_qs.filter(tipo_solicitud__responsable=responsable_rol)
+
+    # Conteos para tabs
+    base_qs = solicitudes_qs
+
+    # Filtro de búsqueda
+    if search:
+        solicitudes_qs = solicitudes_qs.filter(
+            Q(folio__icontains=search)
+            | Q(usuario__username__icontains=search)
+            | Q(usuario__first_name__icontains=search)
+            | Q(usuario__last_name__icontains=search)
+            | Q(tipo_solicitud__nombre__icontains=search)
+        )
+
+    # Filtro de estatus
+    if estatus and estatus in ['1', '2', '3', '4']:
+        if estatus == '1':
+            solicitudes_qs = solicitudes_qs.filter(Q(ultimo_estatus='1') | Q(ultimo_estatus__isnull=True))
+        else:
+            solicitudes_qs = solicitudes_qs.filter(ultimo_estatus=estatus)
+ 
+    # Aplicar el mismo filtro a la base usada para conteos
+    if responsable_rol in ['1', '2', '3', '4']:
+        base_qs = base_qs.filter(tipo_solicitud__responsable=responsable_rol)
+    conteos = {
+        '1': base_qs.filter(Q(ultimo_estatus='1') | Q(ultimo_estatus__isnull=True)).count(),
+        '2': base_qs.filter(ultimo_estatus='2').count(),
+        '3': base_qs.filter(ultimo_estatus='3').count(),
+        '4': base_qs.filter(ultimo_estatus='4').count(),
+        'todos': base_qs.count(),
+    }
+
+    # PAGINACIÓN
+    paginator = Paginator(solicitudes_qs.order_by('-fecha_creacion'), per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Renderizado
+    return render(request, 'solicitudes_table.html', {
+        'page_obj': page_obj,
+        'solicitudes': page_obj,  
+        'estatus_activo': estatus or 'todos',
+        'conteos': conteos,
+        'search': search,
+        'per_page': per_page,  
+    })

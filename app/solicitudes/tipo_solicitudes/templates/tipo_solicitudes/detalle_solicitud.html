@@ -1,0 +1,139 @@
+{% extends 'blank.html' %}
+
+{% block contenido %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Detalle de Solicitud</h1>
+        <a href="{% url 'mis_solicitudes' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+    
+    <!-- Información general -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información General</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Folio:</th>
+                            <td><strong>{{ solicitud.folio }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Tipo de Solicitud:</th>
+                            <td>{{ solicitud.tipo_solicitud.nombre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Solicitante:</th>
+                            <td>{{ solicitud.usuario.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha de Creación:</th>
+                            <td>{{ solicitud.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estatus:</th>
+                            <td>
+                                {% if solicitud.estatus == '1' %}
+                                <span class="badge badge-info">{{ solicitud.get_estatus_display }}</span>
+                                {% elif solicitud.estatus == '2' %}
+                                <span class="badge badge-warning">{{ solicitud.get_estatus_display }}</span>
+                                {% elif solicitud.estatus == '3' %}
+                                <span class="badge badge-success">{{ solicitud.get_estatus_display }}</span>
+                                {% elif solicitud.estatus == '4' %}
+                                <span class="badge badge-danger">{{ solicitud.get_estatus_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Acciones Rápidas</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'seguimiento_solicitud' solicitud.id %}" class="btn btn-primary btn-block mb-2">
+                        <i class="fas fa-list"></i> Ver Seguimiento Completo
+                    </a>
+                    <a href="{% url 'mis_solicitudes' %}" class="btn btn-secondary btn-block">
+                        <i class="fas fa-folder-open"></i> Ver Todas Mis Solicitudes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Respuestas del formulario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Información de la Solicitud</h6>
+        </div>
+        <div class="card-body">
+            {% for respuesta in respuestas %}
+            <div class="mb-3 pb-3 border-bottom">
+                <strong>{{ respuesta.campo.etiqueta }}:</strong>
+                
+                {% if respuesta.campo.tipo == 'file' %}
+                    <div class="mt-2">
+                        {% for archivo in respuesta.archivos.all %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-file mr-2"></i>
+                            <a href="{{ archivo.archivo.url }}" target="_blank">
+                                {{ archivo.nombre }}
+                            </a>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted mb-0">Sin archivos adjuntos</p>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="mb-0 mt-1">{{ respuesta.valor|default:"Sin respuesta" }}</p>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p class="text-muted">No hay información adicional registrada.</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Último seguimiento -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Último Seguimiento</h6>
+        </div>
+        <div class="card-body">
+            {% if seguimientos %}
+                {% with ultimo=seguimientos.0 %}
+                <div class="media">
+                    <div class="media-body">
+                        <h5 class="mt-0">
+                            <span class="badge badge-secondary">{{ estatus_dict|get_item:ultimo.estatus }}</span>
+                        </h5>
+                        <p class="mb-1">{{ ultimo.observaciones|default:"Sin observaciones" }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> {{ ultimo.fecha_creacion|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+                {% endwith %}
+                
+                <a href="{% url 'seguimiento_solicitud' solicitud.id %}" class="btn btn-sm btn-primary mt-3">
+                    Ver historial completo <i class="fas fa-arrow-right"></i>
+                </a>
+            {% else %}
+            <p class="text-muted mb-0">No hay seguimientos registrados.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Template tag personalizado para diccionarios -->
+{% load custom_filters %}
+{% endblock contenido %}

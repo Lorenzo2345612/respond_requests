@@ -7,7 +7,6 @@ RESPOSABLES = [
     ('3', 'Responsable de tutorías'),
     ('4', 'Director'),
 ]
-
 class TipoSolicitud(models.Model):
     nombre = models.CharField(max_length=150)
     descripcion = models.CharField(max_length=350)
@@ -57,7 +56,6 @@ class Solicitud(models.Model):
     tipo_solicitud = models.ForeignKey(TipoSolicitud, on_delete=models.CASCADE)
     folio = models.CharField(max_length=20, unique=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    estatus = models.CharField(max_length=1, choices=ESTATUS, default='1')  # <--- CAMPO AÑADIDO
     estatus = models.CharField(max_length=1, choices=ESTATUS, default='1') # <--- CAMPO AÑADIDO
 
     def __str__(self):
