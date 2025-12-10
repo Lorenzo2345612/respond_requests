@@ -30,7 +30,8 @@ def step_ver_tabla_solicitudes(context):
 
 @then(u'solo veo las solicitudes en estado "Cancelada"')
 def step_ver_solicitudes_canceladas(context):
-    filas = context.driver.find_elements(By.CSS_SELECTOR, "#solicitudesTable tbody tr")
+    filas = context.driver.find_elements(
+        By.CSS_SELECTOR, "#solicitudesTable tbody tr")
     assert filas, "No se encontraron filas en la tabla de solicitudes."
 
     for fila in filas:
@@ -94,7 +95,8 @@ def step_ver_historial_seguimiento(context):
 
 @then('debo ver en la tabla una fila con el folio "{folio}"')
 def step_ver_fila_folio(context, folio):
-    filas = context.driver.find_elements(By.CSS_SELECTOR, "#solicitudesTable tbody tr")
+    filas = context.driver.find_elements(
+        By.CSS_SELECTOR, "#solicitudesTable tbody tr")
     assert len(filas) > 0, "No se encontraron filas en la tabla después de buscar."
 
     encontrado = False
