@@ -3,6 +3,7 @@ Tests unitarios para decoradores de solicitudes_app (DSM5)
 """
 from django.test import TestCase, RequestFactory
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from solicitudes_app.models import Usuario
 from solicitudes_app.decorators import (
@@ -228,6 +229,28 @@ class DecoradorPuedeCrearTiposTest(TestCase):
         response = vista_test(request)
         self.assertEqual(response.status_code, 302)
 
+    def test_alumno_sin_permiso_mensaje_error(self):
+        """Alumno sin permiso recibe mensaje de error específico"""
+        @puede_crear_tipos
+        def vista_test(request):
+            return "success"
+
+        request = self.factory.get('/test/')
+        request.user = self.alumno
+        self._add_messages_to_request(request)
+
+        response = vista_test(request)
+        
+        # Verificar que hay mensajes
+        storage = messages.get_messages(request)
+        message_list = list(storage)
+        self.assertTrue(len(message_list) > 0)
+        
+        # Verificar contenido del mensaje
+        message_text = str(message_list[0])
+        self.assertIn('permiso', message_text.lower())
+        self.assertIn('crear tipos', message_text.lower())
+
 
 class DecoradorPuedeAtenderSolicitudesTest(TestCase):
     """Tests para el decorador puede_atender_solicitudes_decorator"""
@@ -335,6 +358,28 @@ class DecoradorPuedeAtenderSolicitudesTest(TestCase):
 
         response = vista_test(request)
         self.assertEqual(response.status_code, 302)
+
+    def test_alumno_sin_permiso_atender_mensaje_error(self):
+        """Alumno sin permiso para atender recibe mensaje de error"""
+        @puede_atender_solicitudes
+        def vista_test(request):
+            return "success"
+
+        request = self.factory.get('/test/')
+        request.user = self.alumno
+        self._add_messages_to_request(request)
+
+        response = vista_test(request)
+        
+        # Verificar que hay mensajes
+        storage = messages.get_messages(request)
+        message_list = list(storage)
+        self.assertTrue(len(message_list) > 0)
+        
+        # Verificar contenido del mensaje
+        message_text = str(message_list[0])
+        self.assertIn('permiso', message_text.lower())
+        self.assertIn('atender solicitudes', message_text.lower())
 
 
 

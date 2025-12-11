@@ -67,8 +67,8 @@ def puede_crear_tipos(view_func):
             return redirect('solicitudes_app:login')
 
         if not request.user.puede_crear_tipo_solicitud():
-            messages.error(
-                request, 'No tienes permiso para crear tipos de solicitud.')
+            msg = 'No tienes permiso para crear tipos de solicitud.'
+            messages.error(request, msg)
             return redirect('bienvenida')
 
         return view_func(request, *args, **kwargs)
@@ -87,8 +87,8 @@ def puede_atender_solicitudes(view_func):
             return redirect('solicitudes_app:login')
 
         if not request.user.puede_atender_solicitudes():
-            messages.error(
-                request, 'No tienes permiso para atender solicitudes.')
+            msg = 'No tienes permiso para atender solicitudes.'
+            messages.error(request, msg)
             return redirect('bienvenida')
 
         return view_func(request, *args, **kwargs)
