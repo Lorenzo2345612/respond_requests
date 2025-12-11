@@ -15,3 +15,17 @@ db.sqlite3
 .vscode/
 tickets/
 progress.output
+
+# Documentación DSM5 y archivos de pruebas
+Readme*.md
+readme*.md
+Plan_Pruebas_JMeter_DSM5*.md
+Requerimientos.txt
+
+# JMeter y archivos de pruebas de carga
+JMX/
+*.jmx
+*.csv
+
+# Archivos de configuración local
+apache-jmeter-*/
