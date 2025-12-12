@@ -46,8 +46,8 @@ def step_impl(context, titulo_grafica_solicitud):
 
 @then(u'deberia ver el titulo "{titulo_tendencias_solicitudes}"')
 def step_impl(context, titulo_tendencias_solicitudes):
-    titulo = context.driver.find_element(By.CLASS_NAME, 'titulo-graficas').text
-    assert titulo == titulo_tendencias_solicitudes, f"El titulo es {titulo}"
+    titulo = context.driver.find_element(By.CSS_SELECTOR, '.header-container h1').text
+    assert titulo == titulo_tendencias_solicitudes, f"El titulo esperado era '{titulo_tendencias_solicitudes}' pero se encontró '{titulo}'"
 
 
 @then(u'debería ver la grafica con titulo "{titulo_grafica_solicitud}"')
