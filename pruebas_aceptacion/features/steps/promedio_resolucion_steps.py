@@ -10,6 +10,7 @@ from datetime import timedelta
 
 
 
+
 @given('existen solicitudes con tiempos de resolución calculables')
 def existen_solicitudes_calculables(context):
     """Crea solicitudes completadas con fechas de creación y resolución para calcular promedio."""

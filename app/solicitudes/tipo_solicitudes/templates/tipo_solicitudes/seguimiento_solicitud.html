@@ -14,7 +14,6 @@
         </div>
     </div>
     
-    <!-- Información de la solicitud -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 bg-primary text-white">
             <h6 class="m-0 font-weight-bold">
@@ -37,15 +36,29 @@
                 </div>
                 <div class="col-md-3">
                     <strong>Estatus Actual:</strong><br>
-                    {% if solicitud.estatus == '1' %}
-                    <span class="badge badge-info badge-pill">{{ solicitud.get_estatus_display }}</span>
-                    {% elif solicitud.estatus == '2' %}
-                    <span class="badge badge-warning badge-pill">{{ solicitud.get_estatus_display }}</span>
-                    {% elif solicitud.estatus == '3' %}
-                    <span class="badge badge-success badge-pill">{{ solicitud.get_estatus_display }}</span>
-                    {% elif solicitud.estatus == '4' %}
-                    <span class="badge badge-danger badge-pill">{{ solicitud.get_estatus_display }}</span>
-                    {% endif %}
+                    {% with ultimo_seg=solicitud.seguimientos.all.first %}
+                        {% if ultimo_seg %}
+                            {% if ultimo_seg.estatus == '1' %}
+                            <span class="badge badge-info badge-pill">{{ ultimo_seg.get_estatus_display }}</span>
+                            {% elif ultimo_seg.estatus == '2' %}
+                            <span class="badge badge-warning badge-pill">{{ ultimo_seg.get_estatus_display }}</span>
+                            {% elif ultimo_seg.estatus == '3' %}
+                            <span class="badge badge-success badge-pill">{{ ultimo_seg.get_estatus_display }}</span>
+                            {% elif ultimo_seg.estatus == '4' %}
+                            <span class="badge badge-danger badge-pill">{{ ultimo_seg.get_estatus_display }}</span>
+                            {% endif %}
+                        {% else %}
+                            {% if solicitud.estatus == '1' %}
+                            <span class="badge badge-info badge-pill">{{ solicitud.get_estatus_display }}</span>
+                            {% elif solicitud.estatus == '2' %}
+                            <span class="badge badge-warning badge-pill">{{ solicitud.get_estatus_display }}</span>
+                            {% elif solicitud.estatus == '3' %}
+                            <span class="badge badge-success badge-pill">{{ solicitud.get_estatus_display }}</span>
+                            {% elif solicitud.estatus == '4' %}
+                            <span class="badge badge-danger badge-pill">{{ solicitud.get_estatus_display }}</span>
+                            {% endif %}
+                        {% endif %}
+                    {% endwith %}
                 </div>
             </div>
         </div>
@@ -99,6 +112,12 @@
                                     <p class="card-text">
                                         {{ seguimiento.observaciones|default:"Sin observaciones adicionales" }}
                                     </p>
+                                    {% if seguimiento.fecha_terminacion %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-check-circle"></i> 
+                                        Finalizada: {{ seguimiento.fecha_terminacion|date:"d/m/Y H:i" }}
+                                    </small>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -115,7 +134,7 @@
     </div>
 </div>
 
-    <style>
+<style>
 .timeline-badge {
     width: 20px;
     height: 20px;
@@ -136,6 +155,11 @@
 
 .timeline-item:last-child .timeline-line {
     display: none;
+}
+
+.badge-pill {
+    padding: 0.35em 0.65em;
+    font-size: 0.875rem;
 }
 </style>
 
