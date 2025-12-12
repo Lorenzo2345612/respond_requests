@@ -4,6 +4,28 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import os
+import sys
+import django
+
+# Configurar Django
+base = os.path.abspath(os.path.join(os.path.dirname(
+    __file__), '..', '..', '..', '..', 'app', 'solicitudes'))
+if base not in sys.path:
+    sys.path.insert(0, base)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'solicitudes.settings')
+django.setup()
+
+from tipo_solicitudes.models import TipoSolicitud, FormularioSolicitud, CampoFormulario
+
+# Limpiar datos al cargar el módulo
+def limpiar_datos_pruebas():
+    try:
+        CampoFormulario.objects.all().delete()
+        FormularioSolicitud.objects.all().delete()
+        TipoSolicitud.objects.all().delete()
+    except:
+        pass
 
 # ===GIVEN
 
@@ -16,6 +38,7 @@ def step_impl(context):
 
 @given(u'existe un formulario llamado "{nombre}"')
 def step_impl(context, nombre):
+    # No limpiar aquí porque puede haber datos de pasos anteriores que se necesitan
     context.driver.get(f"{context.url}/tipo-solicitud/formularios/")
     time.sleep(1)
 
@@ -393,3 +416,67 @@ def step_impl(context, nombre):
     assert 'Configurar campos' in titulo or nombre in titulo, \
         f"No se encontró el título esperado. Título actual: {titulo}"
     time.sleep(0.5)
+
+
+# === NUEVOS STEPS PARA AGREGAR PREGUNTAS Y ELIMINACIÓN ===
+
+@then(u'soy redirigido a la página de agregar preguntas')
+def step_impl(context):
+    time.sleep(1)
+    assert '/formulario/' in context.driver.current_url and '/campos/' in context.driver.current_url, \
+        f"No se redirigió correctamente. URL actual: {context.driver.current_url}"
+
+
+@then(u'veo el título que contiene "{texto}"')
+def step_impl(context, texto):
+    time.sleep(1)
+    try:
+        h1_element = context.driver.find_element(By.TAG_NAME, 'h1')
+        titulo = h1_element.text
+        assert texto in titulo, f"No se encontró '{texto}' en el título. Título actual: {titulo}"
+    except:
+        raise AssertionError(f"No se encontró el título esperado con '{texto}'")
+
+
+@when(u'confirmo la eliminación en el modal de formulario')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal = wait.until(EC.presence_of_element_located(
+        (By.ID, 'confirmacionEliminacionModal')))
+    submit_btn = modal.find_element(By.XPATH, "//button[@type='submit']")
+    context.driver.execute_script("arguments[0].click();", submit_btn)
+    time.sleep(2)
+
+
+@when(u'cancelo la eliminación en el modal de formulario')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal = wait.until(EC.presence_of_element_located(
+        (By.ID, 'confirmacionEliminacionModal')))
+    cancelar_btn = modal.find_element(
+        By.XPATH, "//button[contains(@class, 'btn-secondary')]")
+    context.driver.execute_script("arguments[0].click();", cancelar_btn)
+    time.sleep(1)
+
+
+@then(u'veo un mensaje de éxito de eliminación de formulario')
+def step_impl(context):
+    time.sleep(1)
+    try:
+        mensajes = context.driver.find_elements(By.CLASS_NAME, 'alert-success')
+        assert len(mensajes) > 0, "No se encontró mensaje de éxito"
+    except:
+        assert '/tipo-solicitud/formularios/' in context.driver.current_url
+
+
+@then(u'permanezco en la lista de formularios')
+def step_impl(context):
+    assert '/tipo-solicitud/formularios/' in context.driver.current_url, \
+        f"No está en la lista de formularios. URL actual: {context.driver.current_url}"
+    time.sleep(0.5)
+
+
+@then(u'navego a la lista de formularios')
+def step_impl(context):
+    context.driver.get(f"{context.url}/tipo-solicitud/formularios/")
+    time.sleep(1)

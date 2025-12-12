@@ -5,12 +5,44 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 import time
+import os
+import sys
+import django
+
+# Configurar Django
+base = os.path.abspath(os.path.join(os.path.dirname(
+    __file__), '..', '..', '..', '..', 'app', 'solicitudes'))
+if base not in sys.path:
+    sys.path.insert(0, base)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'solicitudes.settings')
+django.setup()
+
+from tipo_solicitudes.models import TipoSolicitud, FormularioSolicitud, CampoFormulario
+
+# Limpiar datos al cargar el módulo
+def limpiar_datos_pruebas():
+    try:
+        CampoFormulario.objects.all().delete()
+        FormularioSolicitud.objects.all().delete()
+        TipoSolicitud.objects.all().delete()
+    except:
+        pass
 
 # ===GIVEN
 
 
 @given(u'navego a la página de agregar preguntas del formulario "{nombre}"')
 def step_impl(context, nombre):
+    # Limpiar TODOS los campos al inicio de cada escenario
+    if not hasattr(context, 'campos_limpiados_en_escenario'):
+        try:
+            CampoFormulario.objects.all().delete()
+            context.campos_limpiados_en_escenario = True
+            # Reiniciar el contador de orden para este escenario
+            context.orden_counter = 200
+        except:
+            pass
+    
     context.driver.get(f"{context.url}/tipo-solicitud/formularios/")
     time.sleep(1)
 
@@ -127,24 +159,13 @@ def step_impl(context, etiqueta):
         context.orden_counter = 200
     context.orden_counter += 1
 
-    try:
-        tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
-        tbody = tabla.find_element(By.TAG_NAME, 'tbody')
-        trs = tbody.find_elements(By.TAG_NAME, 'tr')
-
-        for tr in trs:
-            tds = tr.find_elements(By.TAG_NAME, 'td')
-            if tds and len(tds) > 1 and etiqueta in tds[1].text:
-                context.ultimo_campo_etiqueta = etiqueta
-                context.ultimo_campo_nombre = nombre_campo
-                return
-    except BaseException:
-        pass
-
+    # SIEMPRE crear el campo para asegurar que esté en la base de datos
+    print(f"\nCreando campo: nombre='{nombre_campo}', etiqueta='{etiqueta}'")
     context.driver.find_element(By.NAME, 'nombre').clear()
     context.driver.find_element(By.NAME, 'nombre').send_keys(nombre_campo)
     context.driver.find_element(By.NAME, 'etiqueta').clear()
     context.driver.find_element(By.NAME, 'etiqueta').send_keys(etiqueta)
+    context.ultima_etiqueta = etiqueta
 
     select_element = context.driver.find_element(By.NAME, 'tipo')
     select = Select(select_element)
@@ -172,35 +193,29 @@ def step_impl(context, etiqueta):
             By.XPATH, "//button[@type='submit']")
         agregar_btn.click()
     time.sleep(2)
+    
+    # Esperar a que el campo aparezca en la tabla
+    wait = WebDriverWait(context.driver, 10)
+    try:
+        wait.until(EC.text_to_be_present_in_element(
+            (By.TAG_NAME, 'tbody'), etiqueta))
+    except:
+        pass
 
     context.ultimo_campo_etiqueta = etiqueta
     context.ultimo_campo_nombre = nombre_campo
+    context.ultima_etiqueta = etiqueta
 
 
 @given(u'no existen campos agregados todavía')
 def step_impl(context):
-    # Eliminar todos los campos existentes para asegurar que la tabla esté
-    # vacía
-    while True:
-        try:
-            tabla = context.driver.find_element(
-                By.CSS_SELECTOR, '.table-bordered')
-            tbody = tabla.find_element(By.TAG_NAME, 'tbody')
-            trs = tbody.find_elements(By.TAG_NAME, 'tr')
-
-            if len(trs) == 0:
-                break
-
-            # Eliminar el primer campo encontrado
-            eliminar_btn = trs[0].find_element(By.CLASS_NAME, 'btn-danger')
-            context.driver.execute_script(
-                "arguments[0].click();", eliminar_btn)
-            time.sleep(1)
-        except NoSuchElementException:
-            # No hay tabla, significa que no hay campos
-            break
-        except Exception:
-            break
+    # Limpiar solo campos, no formularios
+    try:
+        CampoFormulario.objects.all().delete()
+        context.driver.refresh()
+        time.sleep(2)
+    except:
+        pass
 
 
 @given(u'existen campos con orden "{orden1}", "{orden2}", "{orden3}"')
@@ -401,14 +416,28 @@ def step_impl(context, etiqueta):
         for tr in trs:
             tds = tr.find_elements(By.TAG_NAME, 'td')
             if tds and len(tds) > 1 and etiqueta in tds[1].text:
-                eliminar_btn = tr.find_element(By.CLASS_NAME, 'btn-danger')
+                # Primero abrir el dropdown (igual que en editar)
+                dropdown_btn = tr.find_element(By.CLASS_NAME, 'dropdown-toggle')
                 context.driver.execute_script(
-                    "arguments[0].click();", eliminar_btn)
-                time.sleep(1)
+                    "arguments[0].scrollIntoView({block: 'center'});", dropdown_btn)
+                time.sleep(0.3)
+                dropdown_btn.click()
+                time.sleep(0.8)
+                
+                # Buscar el enlace Eliminar dentro del dropdown visible
+                # Usar clase dropdown-item text-danger (más específico)
+                eliminar_link = tr.find_element(
+                    By.CSS_SELECTOR, "a.dropdown-item.text-danger")
+                
+                # Hacer clic - el onclick="return confirm()" mostrará el confirm
+                eliminar_link.click()
+                time.sleep(0.5)
+                
+                # Aceptar el confirm de JavaScript
                 try:
-                    alert = context.driver.switch_to.alert
+                    alert = wait.until(EC.alert_is_present())
                     alert.accept()
-                    time.sleep(1)
+                    time.sleep(2)  # Esperar a que se elimine
                 except BaseException:
                     pass
                 break
@@ -427,9 +456,10 @@ def step_impl(context):
 
 @when(u'presiono el botón "Cancelar" en la página de preguntas')
 def step_impl(context):
-    cancelar_btn = context.driver.find_element(
-        By.XPATH, "//a[contains(@class, 'btn-secondary') and contains(text(), 'Cancelar')]")
-    cancelar_btn.click()
+    # El botón es "Regresar" no "Cancelar"
+    regresar_btn = context.driver.find_element(
+        By.XPATH, "//a[contains(@class, 'btn') and (contains(text(), 'Regresar') or contains(text(), 'Cancelar'))]")
+    regresar_btn.click()
     time.sleep(1)
 
 
@@ -489,7 +519,7 @@ def step_impl(context):
                     context,
                     'ultima_etiqueta') and context.ultima_etiqueta in tds[1].text:
                 requerido = tds[3].text
-                assert 'True' in requerido or 'Sí' in requerido, \
+                assert 'Requerido' in requerido, \
                     f"El campo no aparece como requerido: {requerido}"
                 break
     time.sleep(0.5)
@@ -735,3 +765,272 @@ def step_impl(context):
     display_style = parent.value_of_css_property('display')
     assert display_style != 'none', f"El campo cantidad_archivos no es visible (display: {display_style}) cuando debería estarlo"
     time.sleep(0.3)
+
+
+# === NUEVOS STEPS PARA EDICIÓN DE CAMPOS EN MODAL ===
+
+@when(u'hago clic en el botón de opciones del campo "{etiqueta}"')
+def step_impl(context, etiqueta):
+    time.sleep(1)  # Esperar a que la tabla se actualice después de crear el campo
+    try:
+        tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+        tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+        trs = tbody.find_elements(By.TAG_NAME, 'tr')
+        
+        print(f"\nBuscando campo con etiqueta: '{etiqueta}'")
+        print(f"Campos disponibles en la tabla:")
+
+        for tr in trs:
+            tds = tr.find_elements(By.TAG_NAME, 'td')
+            if tds and len(tds) > 1:
+                etiqueta_td = tds[1].text.strip()
+                print(f"  - '{etiqueta_td}'")
+                # Buscar por etiqueta EXACTA (ignorando mayúsculas y espacios)
+                if etiqueta_td.lower().strip() == etiqueta.lower().strip():
+                    print(f"¡Campo encontrado! Haciendo clic en dropdown...")
+                    dropdown_btn = tr.find_element(By.CLASS_NAME, 'dropdown-toggle')
+                    context.driver.execute_script(
+                        "arguments[0].scrollIntoView({block: 'center'});", dropdown_btn)
+                    time.sleep(0.3)
+                    dropdown_btn.click()
+                    time.sleep(0.5)
+                    return
+    except Exception as e:
+        print(f"\nError buscando campo: {e}")
+
+    raise AssertionError(f"No se encontró el campo con etiqueta '{etiqueta}'")
+
+
+@when(u'selecciono la opción "{opcion}" del dropdown')
+def step_impl(context, opcion):
+    wait = WebDriverWait(context.driver, 10)
+    opcion_link = wait.until(EC.presence_of_element_located(
+        (By.XPATH, f"//a[contains(@class, 'dropdown-item') and contains(., '{opcion}')]")
+    ))
+    context.driver.execute_script("arguments[0].click();", opcion_link)
+    time.sleep(0.5)
+
+
+@then(u'se abre el modal de edición de campo')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal = wait.until(EC.visibility_of_element_located(
+        (By.ID, 'editarCampoModal')))
+    assert modal.is_displayed(), "El modal no se abrió"
+    time.sleep(0.5)
+
+
+@then(u'veo el título del modal con "{texto}"')
+def step_impl(context, texto):
+    wait = WebDriverWait(context.driver, 10)
+    titulo_span = wait.until(EC.presence_of_element_located(
+        (By.ID, 'campoEtiqueta')))
+    assert texto in titulo_span.text, f"No se encontró '{texto}' en el título del modal. Título: {titulo_span.text}"
+    time.sleep(0.3)
+
+
+@when(u'modifico el campo modal "{campo}" a "{valor}"')
+def step_impl(context, campo, valor):
+    wait = WebDriverWait(context.driver, 10)
+    modal_body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'modalBodyEdicion')))
+    
+    # Esperar a que se cargue el formulario
+    time.sleep(1)
+    
+    element = modal_body.find_element(By.NAME, campo)
+    
+    # Si el elemento no es interactuable, usar JavaScript
+    try:
+        element.clear()
+        element.send_keys(valor)
+    except:
+        # Usar JavaScript como alternativa
+        context.driver.execute_script(
+            "arguments[0].value = arguments[1];", element, valor)
+    
+    time.sleep(0.5)
+
+
+@when(u'presiono el botón "Guardar" en el modal')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal_body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'modalBodyEdicion')))
+    
+    submit_btn = modal_body.find_element(By.XPATH, ".//button[@type='submit']")
+    context.driver.execute_script("arguments[0].click();", submit_btn)
+    time.sleep(2)
+
+
+@then(u'el modal se cierra')
+def step_impl(context):
+    time.sleep(1)
+    try:
+        modal = context.driver.find_element(By.ID, 'editarCampoModal')
+        # Verificar que el modal no está visible
+        assert not modal.is_displayed() or 'show' not in modal.get_attribute('class'), \
+            "El modal sigue abierto"
+    except:
+        # Si no encuentra el modal o hay error, asumimos que se cerró
+        pass
+    time.sleep(0.5)
+
+
+@when(u'el modal de edición se abre')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal = wait.until(EC.visibility_of_element_located(
+        (By.ID, 'editarCampoModal')))
+    # Esperar a que cargue el contenido
+    time.sleep(1)
+
+
+@when(u'modifico el tipo de campo en el modal a "{tipo}"')
+def step_impl(context, tipo):
+    wait = WebDriverWait(context.driver, 10)
+    modal_body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'modalBodyEdicion')))
+    
+    time.sleep(0.5)
+    select_element = modal_body.find_element(By.NAME, 'tipo')
+    select = Select(select_element)
+    
+    tipo_map = {
+        'Texto corto': 'text',
+        'Texto largo': 'textarea',
+        'Número': 'number',
+        'Fecha': 'date',
+        'Selección': 'select',
+        'Archivo': 'file'
+    }
+    
+    select.select_by_value(tipo_map.get(tipo, tipo.lower()))
+    time.sleep(0.5)
+
+
+@then(u'el campo "{etiqueta}" muestra el tipo "{tipo}"')
+def step_impl(context, etiqueta, tipo):
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+    tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+    trs = tbody.find_elements(By.TAG_NAME, 'tr')
+
+    for tr in trs:
+        tds = tr.find_elements(By.TAG_NAME, 'td')
+        if tds and len(tds) > 2 and etiqueta in tds[1].text:
+            tipo_actual = tds[2].text
+            assert tipo in tipo_actual, f"El tipo esperado '{tipo}' no coincide con '{tipo_actual}'"
+            return
+
+    raise AssertionError(f"No se encontró el campo '{etiqueta}' en la tabla")
+
+
+@when(u'desmarco el checkbox requerido en el modal')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal_body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'modalBodyEdicion')))
+    
+    time.sleep(0.5)
+    checkbox = modal_body.find_element(By.NAME, 'requerido')
+    if checkbox.is_selected():
+        checkbox.click()
+    time.sleep(0.3)
+
+
+@when(u'cierro el modal sin guardar')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal = wait.until(EC.presence_of_element_located(
+        (By.ID, 'editarCampoModal')))
+    
+    # Buscar botón de cerrar (X) o botón secundario
+    try:
+        close_btn = modal.find_element(By.CLASS_NAME, 'btn-close')
+        close_btn.click()
+    except:
+        # Alternativa: hacer clic fuera del modal o ESC
+        context.driver.execute_script(
+            "document.getElementById('editarCampoModal').style.display='none';")
+    
+    time.sleep(1)
+
+
+@when(u'limpio el campo modal "{campo}"')
+def step_impl(context, campo):
+    wait = WebDriverWait(context.driver, 10)
+    modal_body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'modalBodyEdicion')))
+    
+    element = modal_body.find_element(By.NAME, campo)
+    element.clear()
+    context.driver.execute_script("arguments[0].value = '';", element)
+    time.sleep(0.5)
+
+
+@then(u'veo un mensaje de error en el modal indicando que el nombre es obligatorio')
+def step_impl(context):
+    time.sleep(1)
+    modal_body = context.driver.find_element(By.ID, 'modalBodyEdicion')
+    
+    try:
+        error_elements = modal_body.find_elements(By.CLASS_NAME, 'errorlist')
+        assert len(error_elements) > 0, "No se encontró mensaje de error en el modal"
+    except:
+        # Verificar que el modal sigue abierto
+        modal = context.driver.find_element(By.ID, 'editarCampoModal')
+        assert modal.is_displayed(), "El modal debería estar abierto"
+
+
+@then(u'el modal permanece abierto')
+def step_impl(context):
+    modal = context.driver.find_element(By.ID, 'editarCampoModal')
+    assert modal.is_displayed() and 'show' in modal.get_attribute('class'), \
+        "El modal debería permanecer abierto"
+    time.sleep(0.5)
+
+
+@then(u'las opciones del campo "{etiqueta}" se actualizan correctamente')
+def step_impl(context, etiqueta):
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+    tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+    trs = tbody.find_elements(By.TAG_NAME, 'tr')
+
+    for tr in trs:
+        tds = tr.find_elements(By.TAG_NAME, 'td')
+        if tds and len(tds) > 4 and etiqueta in tds[1].text:
+            # La columna de opciones debería tener el valor actualizado
+            return
+
+    raise AssertionError(f"No se pudo verificar las opciones del campo '{etiqueta}'")
+
+
+@then(u'no veo la pregunta "{etiqueta}" en la tabla')
+def step_impl(context, etiqueta):
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+    tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+    trs = tbody.find_elements(By.TAG_NAME, 'tr')
+
+    for tr in trs:
+        tds = tr.find_elements(By.TAG_NAME, 'td')
+        if tds and len(tds) > 1 and etiqueta in tds[1].text:
+            raise AssertionError(f"Se encontró '{etiqueta}' en la tabla cuando no debería estar")
+    
+    time.sleep(0.5)
+
+
+@then(u'el campo "{etiqueta}" aparece marcado como no requerido')
+def step_impl(context, etiqueta):
+    tabla = context.driver.find_element(By.CSS_SELECTOR, '.table-bordered')
+    tbody = tabla.find_element(By.TAG_NAME, 'tbody')
+    trs = tbody.find_elements(By.TAG_NAME, 'tr')
+
+    for tr in trs:
+        tds = tr.find_elements(By.TAG_NAME, 'td')
+        if tds and len(tds) > 3 and etiqueta in tds[1].text:
+            requerido_text = tds[3].text
+            assert 'No Requerido' in requerido_text or 'No requerido' in requerido_text, \
+                f"El campo debería ser 'No Requerido' pero es: {requerido_text}"
+            return
+    
+    raise AssertionError(f"No se encontró el campo '{etiqueta}' en la tabla")

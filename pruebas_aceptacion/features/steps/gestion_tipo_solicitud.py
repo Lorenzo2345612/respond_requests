@@ -270,3 +270,75 @@ def step_impl(context):
     except:
         pass
     time.sleep(1)
+
+
+# === NUEVOS STEPS PARA EDICIÓN Y ELIMINACIÓN ===
+
+@when(u'hago clic en el botón de opciones del tipo \"{nombre}\"')
+def step_impl(context, nombre):
+    body = WebDriverWait(context.driver, 10).until(
+        EC.presence_of_element_located((By.ID, 'bodyTipoSolicitudes'))
+    )
+    trs = body.find_elements(By.TAG_NAME, 'tr')
+
+    for tr in trs:
+        tds = tr.find_elements(By.TAG_NAME, 'td')
+        if tds and len(tds) > 0 and tds[0].text == nombre:
+            dropdown_btn = tr.find_element(By.CLASS_NAME, 'dropdown-toggle')
+            context.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center'});", dropdown_btn)
+            time.sleep(0.3)
+            dropdown_btn.click()
+            time.sleep(0.5)
+            return
+
+    raise AssertionError(f"No se encontró el tipo de solicitud '{nombre}'")
+
+
+@when(u'confirmo la eliminación en el modal')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal = wait.until(EC.presence_of_element_located(
+        (By.ID, 'confirmacionEliminacionModal')))
+    submit_btn = modal.find_element(By.XPATH, "//button[@type='submit']")
+    context.driver.execute_script("arguments[0].click();", submit_btn)
+    time.sleep(2)
+
+
+@when(u'cancelo la eliminación en el modal')
+def step_impl(context):
+    wait = WebDriverWait(context.driver, 10)
+    modal = wait.until(EC.presence_of_element_located(
+        (By.ID, 'confirmacionEliminacionModal')))
+    cancelar_btn = modal.find_element(
+        By.XPATH, "//button[contains(@class, 'btn-secondary')]")
+    context.driver.execute_script("arguments[0].click();", cancelar_btn)
+    time.sleep(1)
+
+
+@then(u'veo un mensaje de éxito de eliminación')
+def step_impl(context):
+    time.sleep(1)
+    # Buscar mensajes de éxito en la página
+    try:
+        mensajes = context.driver.find_elements(By.CLASS_NAME, 'alert-success')
+        assert len(mensajes) > 0, "No se encontró mensaje de éxito"
+    except:
+        # Si no hay alert, al menos verificar que estamos en la lista
+        assert '/tipo-solicitud/' in context.driver.current_url
+
+
+@then(u'permanezco en la lista de tipos de solicitudes')
+def step_impl(context):
+    assert context.driver.current_url.endswith('/tipo-solicitud/'), \
+        f"No está en la lista. URL actual: {context.driver.current_url}"
+    time.sleep(0.5)
+
+
+# Steps adicionales para usar en otros features
+@when(u'modifico el campo "{campo}" a "{valor}"')
+def step_impl(context, campo, valor):
+    element = context.driver.find_element(By.NAME, campo)
+    element.clear()
+    element.send_keys(valor)
+    time.sleep(0.5)

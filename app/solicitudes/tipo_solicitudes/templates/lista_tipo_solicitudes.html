@@ -14,22 +14,100 @@
             <tr>
                 <th>Nombre</th>
                 <th>Descripción</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody id="bodyTipoSolicitudes">
             {% if resultado == 0 %}
                 <tr class="text-center">
-                    <td colspan="2"><em>No hay tipos de solicitud</em></td>
+                    <td colspan="3"><em>No hay tipos de solicitud</em></td>
                 </tr>
             {% endif %}
             {% for tipo_solicitud in tipo_solicitudes %}
                 <tr>
                     <td>{{ tipo_solicitud.nombre }}</td>
                     <td>{{ tipo_solicitud.descripcion }}</td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-secondary dropdown-toggle" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false"
+                                    title="Opciones del formulario">
+                                <i class="fas fa-edit"></i> </button>
+                            
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="{% url 'editar_tipo_solicitud' tipo_solicitud.id %}">
+                                        <i class="fas fa-pen me-2"></i> Editar Tipo de Solicitud
+                                    </a>
+                                </li>
+                                
+                                <li>
+                                    <a class="dropdown-item text-danger delete-btn" 
+                                       href="#"
+                                       data-bs-toggle="modal" 
+                                       data-bs-target="#confirmacionEliminacionModal"
+                                       data-element-id="{{ tipo_solicitud.id }}"
+                                       data-element-name="{{ tipo_solicitud.nombre }}">
+                                        <i class="fas fa-trash me-2"></i> Eliminar Tipo de Solicitud
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- MODAL Eliminacion -->
+<div class="modal fade" id="confirmacionEliminacionModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalLabel"><i class="fas fa-exclamation-triangle me-2"></i> Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar el tipo de solicitud: <strong id="elementName"></strong>?</p>
+                <p class="text-danger small">Esta acción es *irreversible*.</p>
+            </div>
+            <div class="modal-footer">
+                <form id="formEliminacion" method="post" action="">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt me-2"></i> Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('confirmacionEliminacionModal');
+        modal.addEventListener('show.bs.modal', function (event) {
+            // Botón que disparó el modal
+            const button = event.relatedTarget;
+            
+            // Extraer información de los atributos data-
+            const elementId = button.getAttribute('data-element-id');
+            const elementName = button.getAttribute('data-element-name');
+
+            // Actualizar el contenido del modal
+            const modalElementName = modal.querySelector('#elementName');
+            modalElementName.textContent = elementName;
+
+            // Actualizar el action del formulario de eliminación
+            const formEliminacion = modal.querySelector('#formEliminacion');
+            // La URL final debe ser algo como /eliminar/123/
+            formEliminacion.setAttribute('action', `/tipo-solicitud/eliminar/${elementId}/`);
+
+        });
+    });
+</script>
 {% endblock contenido %}
 

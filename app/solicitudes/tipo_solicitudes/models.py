@@ -47,7 +47,9 @@ class CampoFormulario(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CAMPO)
     requerido = models.BooleanField(default=True)
     opciones = models.TextField(
-        blank=True, help_text="Usar comas para separar opciones (solo para tipo 'select')")
+        blank=True,
+        help_text="Usar comas para separar opciones (solo para tipo 'select')"
+    )
     cantidad_archivos = models.PositiveIntegerField(
         default=1, help_text="Aplica si el campo es tipo archivo")
     orden = models.PositiveIntegerField(default=0)
@@ -67,26 +69,16 @@ ESTATUS = [
 class Solicitud(models.Model):
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    tipo_solicitud = models.ForeignKey(TipoSolicitud, on_delete=models.CASCADE)
+    tipo_solicitud = models.ForeignKey(
+        TipoSolicitud, on_delete=models.CASCADE)
     folio = models.CharField(max_length=20, unique=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    # Al tener este campo real, Django crea automáticamente get_estatus_display()
     estatus = models.CharField(
-        max_length=1, choices=ESTATUS, default='1')  # <--- CAMPO AÑADIDO
+        max_length=1, choices=ESTATUS, default='1')
 
     def __str__(self):
         return f"{self.folio}"
-    
-    @property
-    def estatus(self):
-        """Retorna el estatus del último seguimiento"""
-        ultimo = self.seguimientos.order_by('-fecha_creacion').first()
-        return ultimo.estatus if ultimo else '1'
-    
-    def get_estatus_display(self):
-        """Retorna el display name del estatus actual"""
-        estatus_dict = dict(ESTATUS)
-        return estatus_dict.get(self.estatus, 'Desconocido')
-
 
 
 class RespuestaCampo(models.Model):
@@ -105,7 +97,12 @@ def upload_path(instance, filename):
 
 class ArchivoAdjunto(models.Model):
     respuesta = models.ForeignKey(
-        RespuestaCampo, on_delete=models.CASCADE, related_name='archivos', null=True, blank=True)
+        RespuestaCampo,
+        on_delete=models.CASCADE,
+        related_name='archivos',
+        null=True,
+        blank=True
+    )
     solicitud = models.ForeignKey(
         Solicitud, on_delete=models.CASCADE, related_name='archivos')
     archivo = models.FileField(upload_to=upload_path)

@@ -101,5 +101,31 @@ Característica: Gestión de formularios de solicitud
         Y navego a la lista de formularios
         Cuando hago clic en el botón de opciones del formulario "Formulario con Preguntas"
         Y selecciono la opción "Agregar Preguntas"
+        Entonces soy redirigido a la página de agregar preguntas
+        Y veo el título que contiene "Formulario con Preguntas"
+
+    Escenario: Eliminar formulario exitosamente
+        Dado que ingreso al sistema
+        Y existe un formulario llamado "Formulario a Eliminar"
+        Y navego a la lista de formularios
+        Cuando hago clic en el botón de opciones del formulario "Formulario a Eliminar"
+        Y selecciono la opción "Eliminar Formulario"
+        Y confirmo la eliminación en el modal de formulario
+        Entonces soy redirigido a la lista de formularios
+        Y no veo el formulario "Formulario a Eliminar" en la lista
+        Y veo un mensaje de éxito de eliminación de formulario
+
+    Escenario: Cancelar eliminación de formulario
+        Dado que ingreso al sistema
+        Y existe un formulario llamado "Formulario a Conservar"
+        Y navego a la lista de formularios
+        Cuando hago clic en el botón de opciones del formulario "Formulario a Conservar"
+        Y selecciono la opción "Eliminar Formulario"
+        Y cancelo la eliminación en el modal de formulario
+        Entonces permanezco en la lista de formularios
+        Y puedo ver el formulario "Formulario a Conservar" en la lista de formularios
+        Y navego a la lista de formularios
+        Cuando hago clic en el botón de opciones del formulario "Formulario con Preguntas"
+        Y selecciono la opción "Agregar Preguntas"
         Entonces soy redirigido a la página de configurar campos
         Y veo el título "Configurar campos del formulario: Formulario con Preguntas"

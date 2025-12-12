@@ -32,6 +32,7 @@ def before_scenario(context, scenario):
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--window-size=1920,1080')
 
     context.driver = webdriver.Chrome(options=chrome_options)
     context.driver.implicitly_wait(5)
@@ -42,4 +43,11 @@ def after_scenario(context, scenario):
     '''Se ejecuta después de cada escenario'''
     if hasattr(context, 'driver'):
         context.driver.quit()
+    
+    # Limpiar flags de contexto específicos de gestion_preguntas_campos
+    if hasattr(context, 'campos_limpiados_en_escenario'):
+        delattr(context, 'campos_limpiados_en_escenario')
+    if hasattr(context, 'orden_counter'):
+        delattr(context, 'orden_counter')
+    
     Usuario.objects.all().delete()

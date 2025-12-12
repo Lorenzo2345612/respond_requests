@@ -2,12 +2,18 @@
 
 {% block contenido %}
 <div class="container-fluid">
-    <h1>Agregar tipo de solicitudes</h1>
+    <h1>{{ titulo }}</h1>
 
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary">
+            {% if instancia %}
+                Actualizar
+            {% else %}
+                Guardar
+            {% endif %}
+        </button>
         <a href="{% url 'lista_tipo_solicitudes' %}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>

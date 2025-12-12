@@ -9,7 +9,6 @@ from tipo_solicitudes.models import (
 Usuario = get_user_model()
 
 
-
 class TestSmokeTest(TestCase):
 
     # def test_hola_mundo(self):
@@ -340,7 +339,7 @@ class TestMetricasView(TestCase):
         )
         seg_inicial.fecha_creacion = inicio
         seg_inicial.save()
-        
+
         seg_term = SeguimientoSolicitud.objects.create(
             solicitud=sol,
             estatus='3',
@@ -370,7 +369,7 @@ class TestMetricasView(TestCase):
         )
         seg_inicial.fecha_creacion = inicio
         seg_inicial.save()
-        
+
         seg_term = SeguimientoSolicitud.objects.create(
             solicitud=sol,
             estatus='3',
@@ -400,7 +399,7 @@ class TestMetricasView(TestCase):
         )
         seg_inicial.fecha_creacion = inicio
         seg_inicial.save()
-        
+
         seg_term = SeguimientoSolicitud.objects.create(
             solicitud=sol,
             estatus='3',
@@ -417,7 +416,7 @@ class TestMetricasView(TestCase):
     def test_promedio_con_multiples_terminadas(self):
         """Verifica cálculo correcto con múltiples solicitudes terminadas"""
         now = timezone.now()
-        
+
         # Solicitud 1: 2 horas
         sol1 = Solicitud.objects.create(
             usuario=self.user,
@@ -431,7 +430,7 @@ class TestMetricasView(TestCase):
         )
         seg1_inicio.fecha_creacion = now - timedelta(hours=2)
         seg1_inicio.save()
-        
+
         seg1 = SeguimientoSolicitud.objects.create(
             solicitud=sol1,
             estatus='3',
@@ -454,7 +453,7 @@ class TestMetricasView(TestCase):
         )
         seg2_inicio.fecha_creacion = now - timedelta(hours=4)
         seg2_inicio.save()
-        
+
         seg2 = SeguimientoSolicitud.objects.create(
             solicitud=sol2,
             estatus='3',
@@ -473,7 +472,7 @@ class TestMetricasView(TestCase):
     def test_solicitud_con_seguimientos_multiples(self):
         """Verifica que usa el primer y último seguimiento correctamente"""
         now = timezone.now()
-        
+
         sol = Solicitud.objects.create(
             usuario=self.user,
             tipo_solicitud=self.tipo1,
@@ -487,7 +486,7 @@ class TestMetricasView(TestCase):
         )
         seg1.fecha_creacion = now - timedelta(hours=5)
         seg1.save()
-        
+
         # Segundo seguimiento: En proceso
         seg2 = SeguimientoSolicitud.objects.create(
             solicitud=sol,
@@ -496,7 +495,7 @@ class TestMetricasView(TestCase):
         )
         seg2.fecha_creacion = now - timedelta(hours=3)
         seg2.save()
-        
+
         # Tercer seguimiento: Terminada
         seg_term = SeguimientoSolicitud.objects.create(
             solicitud=sol,
@@ -516,7 +515,7 @@ class TestMetricasView(TestCase):
     def test_labels_json_formato_correcto(self):
         """Verifica que labels_json está en formato JSON válido"""
         import json
-        
+
         solicitud = Solicitud.objects.create(
             usuario=self.user,
             tipo_solicitud=self.tipo1,
@@ -530,7 +529,7 @@ class TestMetricasView(TestCase):
 
         response = self.client.get('/tipo-solicitud/metricas/')
         labels_json = response.context['labels_json']
-        
+
         # Debe ser JSON válido
         labels = json.loads(labels_json)
         self.assertIsInstance(labels, list)
@@ -539,7 +538,7 @@ class TestMetricasView(TestCase):
     def test_data_json_formato_correcto(self):
         """Verifica que data_json está en formato JSON válido"""
         import json
-        
+
         for i in range(3):
             solicitud = Solicitud.objects.create(
                 usuario=self.user,
@@ -554,7 +553,7 @@ class TestMetricasView(TestCase):
 
         response = self.client.get('/tipo-solicitud/metricas/')
         data_json = response.context['data_json']
-        
+
         # Debe ser JSON válido
         data = json.loads(data_json)
         self.assertIsInstance(data, list)
@@ -564,7 +563,7 @@ class TestMetricasView(TestCase):
         """Verifica que status_series incluye los 4 estatus posibles"""
         response = self.client.get('/tipo-solicitud/metricas/')
         status_series = response.context['status_series']
-        
+
         codes = [item['code'] for item in status_series]
         self.assertIn('1', codes)
         self.assertIn('2', codes)
@@ -576,7 +575,7 @@ class TestMetricasView(TestCase):
         """Verifica que los labels de estatus son correctos"""
         response = self.client.get('/tipo-solicitud/metricas/')
         status_series = response.context['status_series']
-        
+
         labels = {item['code']: item['label'] for item in status_series}
         self.assertEqual(labels['1'], 'Creada')
         self.assertEqual(labels['2'], 'En proceso')
@@ -586,7 +585,7 @@ class TestMetricasView(TestCase):
     def test_solicitudes_canceladas_no_afectan_promedio(self):
         """Verifica que solicitudes canceladas no se incluyen en promedio"""
         now = timezone.now()
-        
+
         # Solicitud cancelada
         sol_cancel = Solicitud.objects.create(
             usuario=self.user,
@@ -612,7 +611,7 @@ class TestMetricasView(TestCase):
             descripcion='Descripción C',
             responsable='3'
         )
-        
+
         # 5 del tipo3, 2 del tipo2, 3 del tipo1
         for i in range(5):
             sol = Solicitud.objects.create(
@@ -625,7 +624,7 @@ class TestMetricasView(TestCase):
                 estatus='1',
                 observaciones='Test'
             )
-        
+
         for i in range(2):
             sol = Solicitud.objects.create(
                 usuario=self.user,
@@ -637,7 +636,7 @@ class TestMetricasView(TestCase):
                 estatus='1',
                 observaciones='Test'
             )
-        
+
         for i in range(3):
             sol = Solicitud.objects.create(
                 usuario=self.user,
@@ -652,7 +651,7 @@ class TestMetricasView(TestCase):
 
         response = self.client.get('/tipo-solicitud/metricas/')
         solicitudes_tipo = response.context['solicitudes_por_tipo']
-        
+
         # Debe estar ordenado por cantidad descendente
         cantidades = [item['count'] for item in solicitudes_tipo]
         self.assertEqual(cantidades, sorted(cantidades, reverse=True))

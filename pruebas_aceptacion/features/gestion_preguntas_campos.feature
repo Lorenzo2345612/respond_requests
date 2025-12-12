@@ -163,3 +163,64 @@ Característica: Gestión de preguntas/campos en formularios
         Entonces el campo "cantidad_archivos" no es visible
         Cuando selecciono el tipo de campo "Archivo"
         Entonces el campo "cantidad_archivos" es visible
+
+    Escenario: Editar pregunta desde el modal exitosamente
+        Y existe un campo llamado "Campo Original"
+        Cuando hago clic en el botón de opciones del campo "Campo Original"
+        Y selecciono la opción "Editar" del dropdown
+        Entonces se abre el modal de edición de campo
+        Y veo el título del modal con "Campo Original"
+        Cuando modifico el campo modal "etiqueta" a "Campo Editado"
+        Y modifico el campo modal "nombre" a "campo_editado"
+        Y presiono el botón "Guardar" en el modal
+        Entonces el modal se cierra
+        Y veo la pregunta "Campo Editado" en la tabla de campos agregados
+        Y no veo la pregunta "Campo Original" en la tabla
+
+    Escenario: Editar tipo de campo en el modal
+        Y existe un campo llamado "Campo de Texto"
+        Cuando hago clic en el botón de opciones del campo "Campo de Texto"
+        Y selecciono la opción "Editar" del dropdown
+        Y el modal de edición se abre
+        Cuando modifico el tipo de campo en el modal a "Número"
+        Y presiono el botón "Guardar" en el modal
+        Entonces el campo "Campo de Texto" muestra el tipo "Número"
+
+    Escenario: Cambiar campo requerido en el modal
+        Y existe un campo llamado "Campo Requerido"
+        Cuando hago clic en el botón de opciones del campo "Campo Requerido"
+        Y selecciono la opción "Editar" del dropdown
+        Y el modal de edición se abre
+        Cuando desmarco el checkbox requerido en el modal
+        Y presiono el botón "Guardar" en el modal
+        Entonces el campo "Campo Requerido" aparece marcado como no requerido
+
+    Escenario: Cancelar edición en el modal
+        Y existe un campo llamado "Campo a No Modificar"
+        Cuando hago clic en el botón de opciones del campo "Campo a No Modificar"
+        Y selecciono la opción "Editar" del dropdown
+        Y el modal de edición se abre
+        Cuando modifico el campo modal "etiqueta" a "Cambio No Guardado"
+        Y cierro el modal sin guardar
+        Entonces el modal se cierra
+        Y veo la pregunta "Campo a No Modificar" en la tabla de campos agregados
+        Y no veo la pregunta "Cambio No Guardado" en la tabla
+
+    Escenario: Error al editar dejando el nombre vacío en el modal
+        Y existe un campo llamado "Campo con Error"
+        Cuando hago clic en el botón de opciones del campo "Campo con Error"
+        Y selecciono la opción "Editar" del dropdown
+        Y el modal de edición se abre
+        Cuando limpio el campo modal "nombre"
+        Y presiono el botón "Guardar" en el modal
+        Entonces veo un mensaje de error en el modal indicando que el nombre es obligatorio
+        Y el modal permanece abierto
+
+    Escenario: Modificar opciones de campo tipo selección en el modal
+        Y existe un campo llamado "Lista de Opciones"
+        Cuando hago clic en el botón de opciones del campo "Lista de Opciones"
+        Y selecciono la opción "Editar" del dropdown
+        Y el modal de edición se abre
+        Cuando modifico el campo modal "opciones" a "A,B,C,D"
+        Y presiono el botón "Guardar" en el modal
+        Entonces las opciones del campo "Lista de Opciones" se actualizan correctamente

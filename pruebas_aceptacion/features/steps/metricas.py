@@ -2,7 +2,18 @@ from behave import then
 from selenium.webdriver.common.by import By
 import re
 
-from .utils import parse_time_hms_to_minutes
+
+def parse_time_hms_to_minutes(time_str):
+    """Convierte tiempo en formato hh:mm:ss a minutos"""
+    parts = time_str.split(':')
+    if len(parts) == 3:
+        hours, minutes, seconds = map(int, parts)
+        return hours * 60 + minutes + seconds / 60
+    elif len(parts) == 2:
+        minutes, seconds = map(int, parts)
+        return minutes + seconds / 60
+    else:
+        return int(parts[0])
 
 
 @then(u'debería ver el título "{title}"')

@@ -1,8 +1,9 @@
 from django import forms
-from .models import (ArchivoAdjunto, RespuestaCampo, SeguimientoSolicitud,
-                     TipoSolicitud, FormularioSolicitud, CampoFormulario,
-                     Solicitud)
-
+from .models import (
+    ArchivoAdjunto, RespuestaCampo, SeguimientoSolicitud,
+    TipoSolicitud, FormularioSolicitud, CampoFormulario,
+    Solicitud
+)
 
 
 class FormTipoSolicitud(forms.ModelForm):
@@ -12,7 +13,11 @@ class FormTipoSolicitud(forms.ModelForm):
 
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'style': 'resize: none;'}),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 6,
+                'style': 'resize: none;'
+            }),
             'responsable': forms.Select(attrs={'class': 'form-control'}),
         }
 
@@ -29,7 +34,11 @@ class FormFormularioSolicitud(forms.ModelForm):
         widgets = {
             'tipo_solicitud': forms.Select(attrs={'class': 'form-control'}),
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'style': 'resize: none;'}),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 6,
+                'style': 'resize: none;'
+            }),
         }
 
 
@@ -52,9 +61,15 @@ class FormCampoFormulario(forms.ModelForm):
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'etiqueta': forms.TextInput(attrs={'class': 'form-control'}),
             'tipo': forms.Select(attrs={'class': 'form-control'}),
-            'requerido': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'opciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
-            'cantidad_archivos': forms.NumberInput(attrs={'class': 'form-control'}),
+            'requerido': forms.CheckboxInput(
+                attrs={'class': 'form-check-input'}
+            ),
+            'opciones': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 6}
+            ),
+            'cantidad_archivos': forms.NumberInput(
+                attrs={'class': 'form-control'}
+            ),
             'orden': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
@@ -64,20 +79,28 @@ class FormCampoFormulario(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['formulario'].required = False
         self.fields['formulario'].widget = forms.HiddenInput()
+        self.fields['orden'].required = False
 
     def clean_orden(self):
         orden = self.cleaned_data.get("orden")
 
-        # Solo validar si el formulario fue pasado
+        if not orden:
+            return orden
+
         if self.formulario:
-            existe = CampoFormulario.objects.filter(
+            qs = CampoFormulario.objects.filter(
                 formulario=self.formulario,
                 orden=orden
-            ).exists()
+            )
 
-            if existe:
+            # Si estamos editando un campo → excluirlo de la validación
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            if qs.exists():
                 raise forms.ValidationError(
-                    "Ese número de orden ya está en uso para este formulario.")
+                    "Ese número de orden ya está en uso para este formulario."
+                )
 
         return orden
 
@@ -88,7 +111,8 @@ class FormCampoFormulario(forms.ModelForm):
 
         if tipo == 'select' and (not opciones or opciones.strip() == ""):
             raise forms.ValidationError(
-                "Debes agregar opciones separadas por comas para un campo select.")
+                "Debes agregar opciones separadas por comas para un campo select."
+            )
 
         if tipo == 'file':
             cant = cleaned.get('cantidad_archivos')
@@ -102,7 +126,7 @@ class FormCampoFormulario(forms.ModelForm):
 class FormSolicitud(forms.ModelForm):
     class Meta:
         model = Solicitud
-        exclude = ['usuario', 'folio', 'fecha_creacion']
+        exclude = ['usuario', 'folio', 'fecha_creacion', 'estatus']
 
 
 class FormRespuestaCampo(forms.ModelForm):

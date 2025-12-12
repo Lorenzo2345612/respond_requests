@@ -1,51 +1,54 @@
 import csv
 import io
 import json
-import matplotlib.pyplot as plt
 from datetime import datetime
+
+import matplotlib
+import matplotlib.pyplot as plt
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Max
-from django.http import HttpResponse
+from django.db.models import Count, Max, OuterRef, Subquery
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
-from django.db.models import Max
-from .funcionalidad import FuncionesAvanzadas
-from .models import ESTATUS
-from .models import RESPOSABLES
-from .models import SeguimientoSolicitud
-from .models import Solicitud
-from .models import TipoSolicitud
-from .models import CampoFormulario
-from .models import FormularioSolicitud
-from .forms import FormCampoFormulario, FormFormularioSolicitud, FormTipoSolicitud
-import matplotlib.pyplot as plt
-from datetime import datetime
-import csv
-import io
-import json
-from django.contrib import messages
-from django.db.models import Count
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from reportlab.lib.pagesizes import letter
+from django.template.loader import render_to_string
+
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.platypus import Paragraph, Spacer, PageBreak, Image
 from reportlab.lib.units import inch
-from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,
-                                Paragraph, Spacer, PageBreak, Image)
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Table,
+    TableStyle,
+    Paragraph,
+    Spacer,
+    PageBreak,
+    Image,
+)
 
-from .forms import (FormCampoFormulario, FormFormularioSolicitud,
-                    FormTipoSolicitud)
-from .models import (ESTATUS, RESPOSABLES, SeguimientoSolicitud, Solicitud,
-                     TipoSolicitud, ArchivoAdjunto, CampoFormulario,
-                     FormularioSolicitud, RespuestaCampo)
-import matplotlib
-matplotlib.use('Agg')  # Backend sin GUI
+from solicitudes_app.decorators import rol_requerido
+
+from .funcionalidad import FuncionesAvanzadas
+from .forms import (
+    FormCampoFormulario,
+    FormFormularioSolicitud,
+    FormTipoSolicitud,
+)
+from .models import (
+    ESTATUS,
+    RESPOSABLES,
+    SeguimientoSolicitud,
+    Solicitud,
+    TipoSolicitud,
+    ArchivoAdjunto,
+    CampoFormulario,
+    FormularioSolicitud,
+    RespuestaCampo,
+)
+
+matplotlib.use("Agg")
 
 
 @login_required
@@ -53,6 +56,7 @@ def bienvenida(request):
     return render(request, 'bienvenida.html')
 
 
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def lista_solicitudes(request):
     context = {
@@ -62,18 +66,35 @@ def lista_solicitudes(request):
     return render(request, 'lista_tipo_solicitudes.html', context)
 
 
+@rol_requerido('administrador', 'control_escolar')
 @login_required
-def agregar(request):
+def agregar_o_editar(request, tipo_solicitud_id=None):
+    tipo_solicitud = None
+    if tipo_solicitud_id:
+        tipo_solicitud = get_object_or_404(
+            TipoSolicitud, id=tipo_solicitud_id
+        )
+
     if request.method == 'POST':
-        form = FormTipoSolicitud(request.POST)
+        form = FormTipoSolicitud(request.POST, instance=tipo_solicitud)
         if form.is_valid():
             form.save()
             return redirect('lista_tipo_solicitudes')
     else:
-        form = FormTipoSolicitud()
+        form = FormTipoSolicitud(instance=tipo_solicitud)
 
-    return render(request, 'agregar_solicitud.html', {'form': form})
+    if tipo_solicitud:
+        titulo = "Editar tipo de solicitud"
+    else:
+        titulo = "Agregar tipo de solicitud"
 
+    context = {
+        'form': form,
+        'titulo': titulo,
+        'instancia': tipo_solicitud
+    }
+
+    return render(request, 'agregar_solicitud.html', context)
 
 
 def solicitudes_por_tipo(solicitudes_filtradas):
@@ -446,7 +467,6 @@ def _agregar_resumen_final(elements, styles, solicitudes, hoy):
     elements.append(fecha_generacion)
 
 
-
 @login_required
 def generar_csv_graficas(request):
     response = HttpResponse(content_type='text/csv')
@@ -589,6 +609,7 @@ def metricas(request):
     return render(request, "tipo_solicitudes/metricas.html", context)
 
 
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def lista_formularios(request):
     context = {
@@ -603,6 +624,7 @@ def generar_folio_unico():
     return f"FOLIO-{uuid.uuid4().hex[:8].upper()}"
 
 
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def crear_o_editar_formulario(request, pk=None):
     instancia = None
@@ -631,37 +653,102 @@ def crear_o_editar_formulario(request, pk=None):
     return render(request, 'crear_formulario_solicitud.html', context)
 
 
+def _calcular_orden_campo(formulario, campo_actual, orden_solicitado=None):
+    """
+    Función auxiliar para determinar el orden de un campo.
+    Extraída para reducir complejidad ciclomática de crear_o_editar_campos.
+    """
+    qs_orden = formulario.campos.all()
+    if campo_actual:
+        qs_orden = qs_orden.exclude(pk=campo_actual.id)
+
+    # Si no se pone orden o se pone 0 → siguiente orden disponible
+    if not orden_solicitado or orden_solicitado == 0:
+        max_orden = qs_orden.aggregate(Max("orden"))["orden__max"] or 0
+        return max_orden + 1, None
+
+    # Si se especifica un orden, verificar que no esté duplicado
+    if qs_orden.filter(orden=orden_solicitado).exists():
+        return None, "Este número de orden ya está en uso."
+
+    return orden_solicitado, None
+
+
+@rol_requerido('administrador', 'control_escolar')
 @login_required
-def crear_campos(request, formulario_id):
+def crear_o_editar_campos(request, formulario_id, campo_id=None):
     formulario = get_object_or_404(FormularioSolicitud, pk=formulario_id)
+    template_modal = "form_editar_campo.html"
+    ajax_request = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    # --- 1. CARGA DEL MODAL (GET AJAX) ---
+    if ajax_request and request.method == "GET" and campo_id:
+        campo = get_object_or_404(
+            CampoFormulario, pk=campo_id, formulario=formulario
+        )
+        form = FormCampoFormulario(instance=campo, formulario=formulario)
+        return render(request, template_modal, {
+            "form": form, "campo": campo, "formulario": formulario
+        })
+
+    # --- 2. PROCESAR GUARDADO (POST) ---
+    campo_a_editar = None
+    if campo_id:
+        campo_a_editar = get_object_or_404(
+            CampoFormulario, pk=campo_id, formulario=formulario
+        )
 
     if request.method == "POST":
-        form = FormCampoFormulario(request.POST, formulario=formulario)
+        form = FormCampoFormulario(
+            request.POST, request.FILES,
+            instance=campo_a_editar, formulario=formulario
+        )
+
         if form.is_valid():
-            nuevo_campo = form.save(commit=False)
-            nuevo_campo.formulario = formulario
+            campo = form.save(commit=False)
+            campo.formulario = formulario
 
-            # Si el usuario no pone orden o pone 0 → poner al final
-            if not nuevo_campo.orden or nuevo_campo.orden == 0:
-                max_orden = formulario.campos.aggregate(
-                    Max('orden'))['orden__max'] or 0
-                nuevo_campo.orden = max_orden + 1
+            nuevo_orden, error_orden = _calcular_orden_campo(
+                formulario, campo_a_editar, campo.orden
+            )
 
-            nuevo_campo.save()
-            return redirect('crear_campos', formulario_id=formulario.id)
+            if error_orden:
+                form.add_error("orden", error_orden)
+                # Si hay error y es AJAX, devolver formulario con errores
+                if ajax_request:
+                    html_errors = render_to_string(template_modal, {
+                        "form": form,
+                        "campo": campo_a_editar,
+                        "formulario": formulario
+                    }, request=request)
+                    return JsonResponse({"ok": False, "html": html_errors})
+            else:
+                campo.orden = nuevo_orden
+                campo.save()
+                if ajax_request:
+                    return JsonResponse({"ok": True})
+                return redirect("crear_campos", formulario_id=formulario.id)
+        # ERROR DE VALIDACIÓN DEL FORMULARIO
+        if ajax_request:
+            html_errors = render_to_string(template_modal, {
+                "form": form,
+                "campo": campo_a_editar,
+                "formulario": formulario
+            }, request=request)
+            return JsonResponse({"ok": False, "html": html_errors})
 
+    # --- 3. VISTA NORMAL (Carga de página completa) ---
     else:
         form = FormCampoFormulario(formulario=formulario)
 
-    campos_existentes = formulario.campos.all().order_by('orden')
+    campos = formulario.campos.all().order_by("orden")
 
-    return render(request, 'preguntas_formulario.html', {
-        'form': form,
-        'formulario': formulario,
-        'campos': campos_existentes,
+    return render(request, "preguntas_formulario.html", {
+        "form": form, "formulario": formulario, "campos": campos,
     })
 
 
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def eliminar_campo(request, campo_id):
     campo = get_object_or_404(CampoFormulario, pk=campo_id)
@@ -699,7 +786,7 @@ def crear_solicitud_usuario(request):
         try:
             formulario_solicitud = get_object_or_404(
                 FormularioSolicitud, tipo_solicitud=tipo)
-        except:
+        except FormularioSolicitud.DoesNotExist:
             messages.error(
                 request, 'No se encontró el formulario para este tipo de solicitud.')
             return redirect('crear_solicitud_usuario')
@@ -785,12 +872,12 @@ def crear_solicitud_usuario(request):
 def mis_solicitudes(request):
     """Vista para que el usuario vea sus propias solicitudes"""
     from django.db.models import OuterRef, Subquery
-    
+
     # Obtener el último estatus de cada solicitud
     ultimo_seguimiento = SeguimientoSolicitud.objects.filter(
         solicitud=OuterRef('pk')
     ).order_by('-fecha_creacion')
-    
+
     solicitudes = Solicitud.objects.filter(
         usuario=request.user
     ).annotate(
@@ -859,3 +946,31 @@ def seguimiento_solicitud(request, solicitud_id):
         'estatus_dict': dict(ESTATUS)
     }
     return render(request, 'tipo_solicitudes/seguimiento_solicitud.html', context)
+
+
+@rol_requerido('administrador', 'control_escolar')
+@login_required
+def eliminar_tipo_solicitud(request, pk):
+    tipo = get_object_or_404(TipoSolicitud, pk=pk)
+
+    if request.method == "POST":
+        tipo.delete()
+        messages.success(request, "Tipo de solicitud eliminado correctamente.")
+        return redirect("lista_tipo_solicitudes")
+
+    messages.error(request, "Operación no permitida.")
+    return redirect("lista_tipo_solicitudes")
+
+
+@rol_requerido('administrador', 'control_escolar')
+@login_required
+def eliminar_formulario_solicitud(request, pk):
+    formulario = get_object_or_404(FormularioSolicitud, pk=pk)
+
+    if request.method == "POST":
+        formulario.delete()
+        messages.success(request, "Formulario eliminado correctamente.")
+        return redirect("lista_formularios")
+
+    messages.error(request, "Operación no permitida.")
+    return redirect("lista_formularios")
