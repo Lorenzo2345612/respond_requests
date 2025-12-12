@@ -13,7 +13,7 @@ from datetime import datetime
 import csv
 import io
 import json
-from django.contrib import messages  
+from django.contrib import messages
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -665,36 +665,42 @@ def crear_solicitud_usuario(request):
     if tipo_id:
         try:
             tipo = get_object_or_404(TipoSolicitud, id=tipo_id)
-            formulario_solicitud = FormularioSolicitud.objects.get(tipo_solicitud=tipo)
+            formulario_solicitud = FormularioSolicitud.objects.get(
+                tipo_solicitud=tipo)
             campos = formulario_solicitud.campos.all().order_by('orden')
         except FormularioSolicitud.DoesNotExist:
-            messages.error(request, 'Este tipo de solicitud no tiene formulario configurado.')
+            messages.error(
+                request, 'Este tipo de solicitud no tiene formulario configurado.')
             return redirect('crear_solicitud_usuario')
 
     if request.method == 'POST' and tipo_id:
         tipo = get_object_or_404(TipoSolicitud, id=tipo_id)
-        
+
         try:
-            formulario_solicitud = get_object_or_404(FormularioSolicitud, tipo_solicitud=tipo)
+            formulario_solicitud = get_object_or_404(
+                FormularioSolicitud, tipo_solicitud=tipo)
         except:
-            messages.error(request, 'No se encontró el formulario para este tipo de solicitud.')
+            messages.error(
+                request, 'No se encontró el formulario para este tipo de solicitud.')
             return redirect('crear_solicitud_usuario')
-            
+
         campos = formulario_solicitud.campos.all().order_by('orden')
 
         errores = []
-        
+
         # Validar campos requeridos
         for campo in campos:
             if campo.requerido:
                 if campo.tipo == 'file':
                     archivos = request.FILES.getlist(f'campo_{campo.id}')
                     if not archivos:
-                        errores.append(f'El campo "{campo.etiqueta}" es obligatorio')
+                        errores.append(
+                            f'El campo "{campo.etiqueta}" es obligatorio')
                 else:
                     valor = request.POST.get(f'campo_{campo.id}', '').strip()
                     if not valor:
-                        errores.append(f'El campo "{campo.etiqueta}" es obligatorio')
+                        errores.append(
+                            f'El campo "{campo.etiqueta}" es obligatorio')
 
         if errores:
             for error in errores:
@@ -705,8 +711,7 @@ def crear_solicitud_usuario(request):
             solicitud = Solicitud.objects.create(
                 usuario=request.user,
                 tipo_solicitud=tipo,
-                folio=folio,
-                estatus='1'  # Creada
+                folio=folio
             )
 
             # Guardar las respuestas
@@ -743,7 +748,8 @@ def crear_solicitud_usuario(request):
                 observaciones='Solicitud creada por el usuario'
             )
 
-            messages.success(request, f'Solicitud creada exitosamente. Folio: {folio}')
+            messages.success(
+                request, f'Solicitud creada exitosamente. Folio: {folio}')
             return redirect('mis_solicitudes')
 
     context = {
@@ -754,16 +760,26 @@ def crear_solicitud_usuario(request):
     }
     return render(request, 'tipo_solicitudes/crear_solicitud.html', context)
 
+
 @login_required
 def mis_solicitudes(request):
     """Vista para que el usuario vea sus propias solicitudes"""
+    from django.db.models import OuterRef, Subquery
+    
+    # Obtener el último estatus de cada solicitud
+    ultimo_seguimiento = SeguimientoSolicitud.objects.filter(
+        solicitud=OuterRef('pk')
+    ).order_by('-fecha_creacion')
+    
     solicitudes = Solicitud.objects.filter(
         usuario=request.user
+    ).annotate(
+        ultimo_estatus=Subquery(ultimo_seguimiento.values('estatus')[:1])
     ).order_by('-fecha_creacion')
 
     estatus_filtro = request.GET.get('estatus')
     if estatus_filtro:
-        solicitudes = solicitudes.filter(estatus=estatus_filtro)
+        solicitudes = solicitudes.filter(ultimo_estatus=estatus_filtro)
 
     context = {
         'solicitudes': solicitudes,

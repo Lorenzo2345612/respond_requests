@@ -49,7 +49,8 @@ class ModelosSolicitudesTest(TestCase):
         self.assertEqual(str(self.tipo), "Constancia")
 
     def test_formulario_str(self):
-        self.assertEqual(str(self.formulario), "Formulario: Formulario Constancia")
+        self.assertEqual(str(self.formulario),
+                         "Formulario: Formulario Constancia")
 
     def test_campo_formulario_str(self):
         self.assertEqual(str(self.campo_texto), "Motivo (text)")

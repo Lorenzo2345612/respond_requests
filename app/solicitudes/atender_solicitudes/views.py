@@ -61,7 +61,6 @@ def marcar_solicitud_en_proceso(request, solicitud_id: int):
     return redirect('atender_solicitud', solicitud_id=solicitud_id)
 
 
-
 @login_required
 @puede_atender_solicitudes
 def cerrar_solicitud(request, solicitud_id: int):
@@ -95,6 +94,7 @@ def cerrar_solicitud(request, solicitud_id: int):
     )
     messages.success(request, 'Solicitud cerrada correctamente.')
     return redirect('atender_solicitud', solicitud_id=solicitud_id)
+
 
 @login_required
 @puede_atender_solicitudes
