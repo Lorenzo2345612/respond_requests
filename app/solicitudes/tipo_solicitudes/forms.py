@@ -68,18 +68,26 @@ class FormCampoFormulario(forms.ModelForm):
     def clean_orden(self):
         orden = self.cleaned_data.get("orden")
 
-        # Solo validar si el formulario fue pasado
+        if not orden:
+            return orden
+
         if self.formulario:
-            existe = CampoFormulario.objects.filter(
+            qs = CampoFormulario.objects.filter(
                 formulario=self.formulario,
                 orden=orden
-            ).exists()
+            )
 
-            if existe:
+            # Si estamos editando un campo → excluirlo de la validación
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            if qs.exists():
                 raise forms.ValidationError(
-                    "Ese número de orden ya está en uso para este formulario.")
+                    "Ese número de orden ya está en uso para este formulario."
+                )
 
         return orden
+
 
     def clean(self):
         cleaned = super().clean()

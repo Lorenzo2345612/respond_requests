@@ -2,6 +2,16 @@
 
 {% block contenido %}
 <div class="container-fluid">
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="mb-0">Campos del formulario: {{ formulario.nombre }}</h1>
         
@@ -9,14 +19,16 @@
             Regresar
         </a>
     </div>
+
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        
+        <div id="crear-campo-container">
+            {{ form.as_p }}
+        </div>
 
         <div class="d-flex justify-content-end gap-2">
-            <button class="btn btn-primary" type="submit">
-                Agregar campo
-            </button>
+            <button class="btn btn-primary" type="submit">Agregar campo</button>
         </div>
     </form>
 
@@ -37,39 +49,38 @@
                 <th>Acción</th>
             </tr>
         </thead>
-
         <tbody>
             {% for campo in campos %}
             <tr>
                 <td>{{ campo.orden }}</td>
                 <td>{{ campo.etiqueta }}</td>
                 <td>{{ campo.get_tipo_display }}</td>
-                <td>{{ campo.requerido }}</td>
-                <td>{{ campo.opciones }}</td>
-                <td>{{ campo.cantidad_archivos }}</td>
+                <td>{% if campo.requerido %}Sí{% else %}No{% endif %}</td>
+                <td>{{ campo.opciones|default:"-" }}</td>
+                <td>{{ campo.cantidad_archivos|default:"-" }}</td>
                 <td>
                     <div class="dropdown">
                         <button class="btn btn-sm btn-secondary dropdown-toggle" 
-                                type="button" 
-                                data-bs-toggle="dropdown" 
-                                aria-expanded="false">
+                                type="button" data-bs-toggle="dropdown">
                             Opciones
                         </button>
                         
                         <ul class="dropdown-menu">
                             <li>
-                                <a class="dropdown-item btn-editar-campo" 
-                                   href="#" 
-                                   data-bs-toggle="modal" 
-                                   data-bs-target="#editarCampoModal"
+                                <a class="dropdown-item btn-editar-campo"
+                                   href="#"
                                    data-campo-id="{{ campo.id }}"
-                                   data-campo-etiqueta="{{ campo.etiqueta }}">
-                                    <i class="fas fa-edit me-2"></i> Editar
+                                   data-campo-etiqueta="{{ campo.etiqueta }}"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#editarCampoModal">
+                                    <i class="fas fa-edit me-2"></i>Editar
                                 </a>
                             </li>
                             <li>
-                                <a href="{% url 'eliminar_campo' campo.id %}" class="dropdown-item text-danger">
-                                    <i class="fas fa-trash me-2"></i> Eliminar
+                                <a href="{% url 'eliminar_campo' campo.id %}" 
+                                   class="dropdown-item text-danger"
+                                   onclick="return confirm('¿Estás seguro de eliminar este campo?')">
+                                    <i class="fas fa-trash me-2"></i>Eliminar
                                 </a>
                             </li>
                         </ul>
@@ -84,54 +95,188 @@
     {% endif %}
 </div>
 
-<!-- MODAL edicion de preguntas -->
- <div class="modal fade" id="editarCampoModal" tabindex="-1" aria-labelledby="editarCampoModalLabel" aria-hidden="true">
+
+<div class="modal fade" id="editarCampoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
+
             <div class="modal-header">
-                <h5 class="modal-title" id="editarCampoModalLabel">Editar Campo: <span id="campoEtiqueta"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title">
+                    Editar Campo: <span id="campoEtiqueta"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
             <div class="modal-body" id="modalBodyEdicion">
                 <div class="text-center p-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Cargando...</span>
-                    </div>
+                    <div class="spinner-border text-primary"></div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    const tipoInput = document.querySelector("#id_tipo");
-    const opcionesField = document.querySelector("#id_opciones").closest("p");
-    const archivosField = document.querySelector("#id_cantidad_archivos").closest("p");
+    // 1. LOGICA PARA FORMULARIO DE CREAR (El de arriba)
+    const containerCrear = document.getElementById("crear-campo-container");
+    
+    if (containerCrear) {
+        const tipoInput = containerCrear.querySelector("select[name='tipo']"); 
+        
+        function actualizarVisibilidadCrear() {
+            if(!tipoInput) return;
+            const tipo = tipoInput.value;
+            
+            const inputOpciones = containerCrear.querySelector("[name='opciones']");
+            const inputArchivos = containerCrear.querySelector("[name='cantidad_archivos']");
 
-    function actualizarVisibilidad() {
-        const tipo = tipoInput.value;
+            if (inputOpciones) {
+                const pOpciones = inputOpciones.closest("p");
+                if(pOpciones) pOpciones.style.display = (tipo === "select") ? "block" : "none";
+            }
 
-        // Visible solo si tipo == select
-        if (tipo === "select") {
-            opcionesField.style.display = "block";
-        } else {
-            opcionesField.style.display = "none";
-            document.querySelector("#id_opciones").value = "";
+            if (inputArchivos) {
+                const pArchivos = inputArchivos.closest("p");
+                if(pArchivos) pArchivos.style.display = (tipo === "file") ? "block" : "none";
+            }
         }
 
-        // Visible solo si tipo == file
-        if (tipo === "file") {
-            archivosField.style.display = "block";
-        } else {
-            archivosField.style.display = "none";
-            document.querySelector("#id_cantidad_archivos").value = 0;
+        if(tipoInput) {
+            tipoInput.addEventListener("change", actualizarVisibilidadCrear);
+            actualizarVisibilidadCrear();
         }
     }
 
-    tipoInput.addEventListener("change", actualizarVisibilidad);
-    actualizarVisibilidad(); // Ejecutar al cargar
+    // 2. LOGICA PARA EL MODAL (Edición)
+    window.inicializarModalEdicion = function() {
+        const formModal = document.getElementById("editCampoForm");
+        if (!formModal) return;
+
+        const tipoSelectModal = formModal.querySelector("select[name='tipo']");
+        
+        const actualizarVisibilidadModal = () => {
+            if(!tipoSelectModal) return;
+            const tipo = tipoSelectModal.value;
+            
+            const inputOpcModal = formModal.querySelector("[name='opciones']");
+            const inputArcModal = formModal.querySelector("[name='cantidad_archivos']");
+
+            if (inputOpcModal) {
+                const div = inputOpcModal.closest("p");
+                if(div) {
+                    div.style.display = (tipo === "select") ? "block" : "none";
+                    if(tipo !== "select") inputOpcModal.value = "";
+                }
+            }
+
+            if (inputArcModal) {
+                const div = inputArcModal.closest("p");
+                if(div) {
+                    div.style.display = (tipo === "file") ? "block" : "none";
+                    if(tipo !== "file") inputArcModal.value = 0;
+                }
+            }
+        };
+
+        if(tipoSelectModal) {
+            tipoSelectModal.addEventListener("change", actualizarVisibilidadModal);
+            actualizarVisibilidadModal();
+        }
+
+        // Manejo del Submit - Versión simplificada
+        formModal.addEventListener("submit", function (e) {
+            e.preventDefault();
+            
+            const submitBtn = formModal.querySelector("button[type='submit']");
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = "Guardando...";
+            submitBtn.disabled = true;
+
+            // Usar el submit normal pero con AJAX para evitar recarga
+            const formData = new FormData(formModal);
+
+            fetch(formModal.action, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": formModal.querySelector("[name=csrfmiddlewaretoken]").value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Si la respuesta es exitosa, cerrar modal y recargar
+                    const modalElement = document.getElementById('editarCampoModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    
+                    if (modal) {
+                        modal.hide();
+                    } else {
+                        // Si no encuentra la instancia, usar el método alternativo
+                        const bsModal = new bootstrap.Modal(modalElement);
+                        bsModal.hide();
+                    }
+                    
+                    // Recargar la página para ver los cambios
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                } else {
+                    // Si hay error, mostrar el formulario con errores
+                    return response.text();
+                }
+            })
+            .then(html => {
+                if (html) {
+                    // Mostrar el formulario con errores de validación
+                    document.getElementById("modalBodyEdicion").innerHTML = html;
+                    window.inicializarModalEdicion();
+                }
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    };
+
+    // 3. CARGAR EL MODAL DESDE EL SERVIDOR
+    const botonesEditar = document.querySelectorAll(".btn-editar-campo");
+    const modalBody = document.getElementById("modalBodyEdicion");
+
+    botonesEditar.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const campoId = this.dataset.campoId;
+            const etiqueta = this.dataset.campoEtiqueta;
+
+            document.getElementById("campoEtiqueta").textContent = etiqueta;
+            
+            modalBody.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary"></div>
+                </div>
+            `;
+
+            fetch(`/tipo-solicitud/formulario/{{ formulario.id }}/campos/${campoId}`, {
+                headers: {"X-Requested-With": "XMLHttpRequest"}
+            })
+                .then(response => response.text())
+                .then(html => {
+                    modalBody.innerHTML = html;
+                    window.inicializarModalEdicion();
+                })
+                .catch(() => {
+                    modalBody.innerHTML = "<p class='text-danger'>Error al cargar el formulario.</p>";
+                });
+        });
+    });
+
 });
 </script>
 

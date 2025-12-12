@@ -24,7 +24,8 @@ from datetime import datetime
 import csv
 import io
 import json
-from django.contrib import messages
+from django.contrib import messages  
+from solicitudes_app.decorators import rol_requerido
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -52,7 +53,7 @@ matplotlib.use('Agg')  # Backend sin GUI
 def bienvenida(request):
     return render(request, 'bienvenida.html')
 
-
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def lista_solicitudes(request):
     context = {
@@ -61,7 +62,7 @@ def lista_solicitudes(request):
     }
     return render(request, 'lista_tipo_solicitudes.html', context)
 
-
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def agregar(request):
     if request.method == 'POST':
@@ -588,7 +589,7 @@ def metricas(request):
 
     return render(request, "tipo_solicitudes/metricas.html", context)
 
-
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def lista_formularios(request):
     context = {
@@ -602,7 +603,7 @@ def generar_folio_unico():
     import uuid
     return f"FOLIO-{uuid.uuid4().hex[:8].upper()}"
 
-
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def crear_o_editar_formulario(request, pk=None):
     instancia = None
@@ -630,45 +631,89 @@ def crear_o_editar_formulario(request, pk=None):
     }
     return render(request, 'crear_formulario_solicitud.html', context)
 
-
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def crear_o_editar_campos(request, formulario_id, campo_id=None):
     formulario = get_object_or_404(FormularioSolicitud, pk=formulario_id)
+    template_modal = "form_editar_campo.html" # El nombre de tu archivo snippet
+
+    # --- 1. CARGA DEL MODAL (GET AJAX) ---
+    if request.headers.get("x-requested-with") == "XMLHttpRequest" and request.method == "GET" and campo_id:
+        campo = get_object_or_404(CampoFormulario, pk=campo_id, formulario=formulario)
+        form = FormCampoFormulario(instance=campo, formulario=formulario)
+        return render(request, template_modal, {
+            "form": form, "campo": campo, "formulario": formulario
+        })
+
+    # --- 2. PROCESAR GUARDADO (POST) ---
     campo_a_editar = None
-    
     if campo_id:
         campo_a_editar = get_object_or_404(CampoFormulario, pk=campo_id, formulario=formulario)
 
     if request.method == "POST":
-        form = FormCampoFormulario(request.POST, instance=campo_a_editar, formulario=formulario)
+        form = FormCampoFormulario(
+            request.POST, request.FILES, 
+            instance=campo_a_editar, formulario=formulario
+        )
+
         if form.is_valid():
-            nuevo_o_editado_campo = form.save(commit=False)
-            nuevo_o_editado_campo.formulario = formulario
+            campo = form.save(commit=False)
+            campo.formulario = formulario
+            
+            # Lógica de Orden - SI NO SE PONE NADA O ES 0 → PONER AL SIGUIENTE DE LA LISTA
+            qs_orden = formulario.campos.all()
+            if campo_a_editar:
+                qs_orden = qs_orden.exclude(pk=campo_a_editar.id)
 
-            # Si el usuario no pone orden o pone 0 → poner al final
-            if not nuevo_o_editado_campo.orden or nuevo_o_editado_campo.orden == 0:
-                qs_orden = formulario.campos
-                if campo_a_editar:
-                    qs_orden = qs_orden.exclude(pk=campo_a_editar.id)
-                    
-                max_orden = qs_orden.aggregate(Max('orden'))['orden__max'] or 0
-                nuevo_o_editado_campo.orden = max_orden + 1
+            # Si no se pone orden o se pone 0 → calcular el siguiente orden disponible
+            if not campo.orden or campo.orden == 0:
+                max_orden = qs_orden.aggregate(Max("orden"))["orden__max"] or 0
+                campo.orden = max_orden + 1
+            else:
+                # Si se especifica un orden, verificar que no esté duplicado
+                if qs_orden.filter(orden=campo.orden).exists():
+                    form.add_error("orden", "Este número de orden ya está en uso.")
+                    # Si hay error y es AJAX, devolver el formulario con errores
+                    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                        html_errors = render_to_string(template_modal, {
+                            "form": form, "campo": campo_a_editar, "formulario": formulario
+                        }, request=request)
+                        return JsonResponse({"ok": False, "html": html_errors})
+                    # Si no es AJAX, continuar para mostrar errores en la página normal
+                else:
+                    # Si no hay error de duplicado, guardar
+                    campo.save()
+                    # ÉXITO AJAX: Devolvemos JSON OK
+                    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                        return JsonResponse({"ok": True})
+                    return redirect("crear_campos", formulario_id=formulario.id)
+            
+            # Si llegamos aquí y el campo.orden era 0 o vacío, ya se calculó el nuevo orden
+            # y no hubo error de duplicado, entonces guardamos
+            campo.save()
+            # ÉXITO AJAX: Devolvemos JSON OK
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"ok": True})
+            return redirect("crear_campos", formulario_id=formulario.id)
 
-            nuevo_o_editado_campo.save()
-            return redirect('crear_campos', formulario_id=formulario.id)
+        # ERROR DE VALIDACIÓN DEL FORMULARIO (no del orden duplicado)
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            html_errors = render_to_string(template_modal, {
+                "form": form, "campo": campo_a_editar, "formulario": formulario
+            }, request=request)
+            return JsonResponse({"ok": False, "html": html_errors})
 
+    # --- 3. VISTA NORMAL (Carga de página completa) ---
     else:
         form = FormCampoFormulario(formulario=formulario)
 
-    campos_existentes = formulario.campos.all().order_by('orden')
+    campos = formulario.campos.all().order_by("orden")
 
-    return render(request, 'preguntas_formulario.html', {
-        'form': form,
-        'formulario': formulario,
-        'campos': campos_existentes,
+    return render(request, "preguntas_formulario.html", {
+        "form": form, "formulario": formulario, "campos": campos,
     })
 
-
+@rol_requerido('administrador', 'control_escolar')
 @login_required
 def eliminar_campo(request, campo_id):
     campo = get_object_or_404(CampoFormulario, pk=campo_id)

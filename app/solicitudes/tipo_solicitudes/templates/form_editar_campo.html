@@ -1,0 +1,24 @@
+<form method="post" 
+      action="{% url 'editar_campos' formulario.id campo.id %}" 
+      id="editCampoForm"
+      onsubmit="return enviarFormularioAjax(event)"
+      enctype="multipart/form-data">
+    
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary" id="btnGuardarModal">
+            Guardar cambios
+        </button>
+    </div>
+</form>
+
+<script>
+    (function(){
+        // Intentamos ejecutar la lógica visual si la función existe
+        if(typeof window.actualizarVisualizacionModal === 'function'){
+            window.actualizarVisualizacionModal();
+        }
+    })();
+</script>

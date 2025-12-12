@@ -16,7 +16,7 @@ urlpatterns = [
     path('formularios/crear/', views.crear_o_editar_formulario, name='crear_formulario'),
     path('formularios/editar/<int:pk>/', views.crear_o_editar_formulario, name='editar_formulario'),
     path('formulario/<int:formulario_id>/campos/', views.crear_o_editar_campos, name='crear_campos'),
-    path('formulario/<int:formulario_id>/campos/<int:campo_id>', views.crear_o_editar_campos, name='editar_campos'),
+    path('formulario/<int:formulario_id>/campos/<int:campo_id>/', views.crear_o_editar_campos, name='editar_campos'),
     path('formulario/campo/<int:campo_id>/eliminar/', views.eliminar_campo, name='eliminar_campo'),
     
     # NUEVAS RUTAS AGREGADAS
