@@ -86,7 +86,7 @@ def step_redirigido_login(context):
 def step_ve_parametro_next(context, next_param):
     """Verifica parámetro next en URL"""
     assert f'next={next_param}' in context.response.request['QUERY_STRING'] or \
-           f'next={next_param}' in str(context.response.redirect_chain)
+        f'next={next_param}' in str(context.response.redirect_chain)
 
 
 # Removed duplicate - using existing one from login_steps.py
@@ -98,7 +98,8 @@ def step_mensaje_no_autorizado(context):
     """Verifica mensaje de acceso no autorizado"""
     content = context.response.content.decode('utf-8')
     # Puede ser mensaje o redirección
-    assert 'autorizado' in content.lower() or len(context.response.redirect_chain) > 0
+    assert 'autorizado' in content.lower() or len(
+        context.response.redirect_chain) > 0
 
 
 @then('ve la página de gestión de usuarios correctamente')
@@ -134,7 +135,7 @@ def step_ve_enlace_gestion(context):
 def step_redirigido_a_url(context, url):
     """Verifica redirección a URL específica"""
     assert url in context.response.redirect_chain[-1][0] or \
-           context.response.request['PATH_INFO'] == url
+        context.response.request['PATH_INFO'] == url
 
 
 @then('no puede acceder a otras páginas hasta cambiar su contraseña')
@@ -175,7 +176,8 @@ def step_accede_todas_sin_redireccion(context):
         assert item['response'].status_code in [200, 302]
         # Si es 302, verifica que no redirige a cambiar password o perfil
         if item['response'].status_code == 302:
-            redirect_url = item['response'].url if hasattr(item['response'], 'url') else ''
+            redirect_url = item['response'].url if hasattr(
+                item['response'], 'url') else ''
             assert 'cambiar-password' not in redirect_url
             # Permite redirección a perfil solo si la URL original es perfil
             if '/auth/perfil/' not in item['url']:
@@ -194,7 +196,7 @@ def step_ve_login_correctamente(context):
 def step_no_redirigido(context):
     """Verifica que no hubo redirección"""
     assert len(context.response.redirect_chain) == 0 or \
-           context.response.redirect_chain[-1][0] == context.response.request['PATH_INFO']
+        context.response.redirect_chain[-1][0] == context.response.request['PATH_INFO']
 
 
 @then('ve la página de registro correctamente')
@@ -209,7 +211,7 @@ def step_ve_registro_correctamente(context):
 def step_usuario_redirigido_a(context, url):
     """Verifica redirección específica"""
     assert url in context.response.redirect_chain[-1][0] or \
-           context.response.request['PATH_INFO'] == url
+        context.response.request['PATH_INFO'] == url
 
 
 @then('no a la página de bienvenida por defecto')

@@ -13,7 +13,7 @@ from datetime import datetime
 import csv
 import io
 import json
-from django.contrib import messages  
+from django.contrib import messages
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -441,6 +441,58 @@ def generar_csv_graficas(request):
     return response
 
 
+def _calcular_promedio_resolucion():
+    """Calcula el promedio de tiempo de resolución de solicitudes terminadas"""
+    solicitudes_terminadas = Solicitud.objects.filter(
+        seguimientos__estatus='3'
+    ).distinct()
+
+    if not solicitudes_terminadas.exists():
+        return None
+
+    total_seconds = 0
+    count = 0
+
+    for solicitud in solicitudes_terminadas:
+        primer_seguimiento = solicitud.seguimientos.order_by(
+            'fecha_creacion').first()
+        seguimiento_terminado = solicitud.seguimientos.filter(
+            estatus='3').order_by('-fecha_creacion').first()
+
+        if primer_seguimiento and seguimiento_terminado:
+            fecha_fin = (
+                seguimiento_terminado.fecha_terminacion
+                if seguimiento_terminado.fecha_terminacion
+                else seguimiento_terminado.fecha_creacion
+            )
+            delta = fecha_fin - primer_seguimiento.fecha_creacion
+            total_seconds += delta.total_seconds()
+            count += 1
+
+    if count == 0:
+        return None
+
+    return _formatear_tiempo_promedio(total_seconds / count)
+
+
+def _formatear_tiempo_promedio(avg_seconds):
+    """Formatea segundos a un formato legible"""
+    if avg_seconds < 60:
+        return f"{int(avg_seconds)}s"
+    elif avg_seconds < 3600:
+        minutes = int(avg_seconds / 60)
+        seconds = int(avg_seconds % 60)
+        return f"{minutes}min {seconds}s"
+    elif avg_seconds < 86400:
+        hours = int(avg_seconds / 3600)
+        minutes = int((avg_seconds % 3600) / 60)
+        return f"{hours}h {minutes}min"
+    else:
+        days = int(avg_seconds / 86400)
+        hours = int((avg_seconds % 86400) / 3600)
+        return f"{days}d {hours}h"
+
+
 @login_required
 def metricas(request):
     total_tickets = Solicitud.objects.count()
@@ -502,59 +554,7 @@ def metricas(request):
     } for code, _ in ESTATUS]
 
     # Cálculo del promedio de resolución basado en SeguimientoSolicitud
-    promedio_resolucion = None
-
-    # Obtener todas las solicitudes que tienen un seguimiento con estatus '3' (Terminada)
-    solicitudes_terminadas = Solicitud.objects.filter(
-        seguimientos__estatus='3'
-    ).distinct()
-
-    if solicitudes_terminadas.exists():
-        total_seconds = 0
-        count = 0
-
-        for solicitud in solicitudes_terminadas:
-            # Obtener el primer seguimiento (inicio) y el último con estatus '3' (terminado)
-            primer_seguimiento = solicitud.seguimientos.order_by(
-                'fecha_creacion').first()
-            seguimiento_terminado = solicitud.seguimientos.filter(
-                estatus='3').order_by('-fecha_creacion').first()
-
-            if primer_seguimiento and seguimiento_terminado:
-                # Usar fecha_terminacion si está disponible,
-                # sino usar fecha_creacion
-                fecha_fin = (
-                    seguimiento_terminado.fecha_terminacion
-                    if seguimiento_terminado.fecha_terminacion
-                    else seguimiento_terminado.fecha_creacion
-                )
-                # Calcular tiempo desde el primer seguimiento hasta que se terminó
-                delta = fecha_fin - primer_seguimiento.fecha_creacion
-                total_seconds += delta.total_seconds()
-                count += 1
-
-        if count > 0:
-            avg_seconds = total_seconds / count
-
-            # Formatear el tiempo de forma más precisa
-            if avg_seconds < 60:
-                # Menos de 1 minuto
-                promedio_resolucion = f"{int(avg_seconds)}s"
-            elif avg_seconds < 3600:
-                # Menos de 1 hora
-                minutes = int(avg_seconds / 60)
-                seconds = int(avg_seconds % 60)
-                promedio_resolucion = f"{minutes}min {seconds}s"
-            elif avg_seconds < 86400:
-                # Menos de 1 día
-                hours = int(avg_seconds / 3600)
-                minutes = int((avg_seconds % 3600) / 60)
-                promedio_resolucion = f"{hours}h {minutes}min"
-            else:
-                # 1 día o más
-                days = int(avg_seconds / 86400)
-                hours = int((avg_seconds % 86400) / 3600)
-                promedio_resolucion = f"{days}d {hours}h"
+    promedio_resolucion = _calcular_promedio_resolucion()
 
     context = {
         'total_tickets': total_tickets,
@@ -665,36 +665,42 @@ def crear_solicitud_usuario(request):
     if tipo_id:
         try:
             tipo = get_object_or_404(TipoSolicitud, id=tipo_id)
-            formulario_solicitud = FormularioSolicitud.objects.get(tipo_solicitud=tipo)
+            formulario_solicitud = FormularioSolicitud.objects.get(
+                tipo_solicitud=tipo)
             campos = formulario_solicitud.campos.all().order_by('orden')
         except FormularioSolicitud.DoesNotExist:
-            messages.error(request, 'Este tipo de solicitud no tiene formulario configurado.')
+            messages.error(
+                request, 'Este tipo de solicitud no tiene formulario configurado.')
             return redirect('crear_solicitud_usuario')
 
     if request.method == 'POST' and tipo_id:
         tipo = get_object_or_404(TipoSolicitud, id=tipo_id)
-        
+
         try:
-            formulario_solicitud = get_object_or_404(FormularioSolicitud, tipo_solicitud=tipo)
+            formulario_solicitud = get_object_or_404(
+                FormularioSolicitud, tipo_solicitud=tipo)
         except:
-            messages.error(request, 'No se encontró el formulario para este tipo de solicitud.')
+            messages.error(
+                request, 'No se encontró el formulario para este tipo de solicitud.')
             return redirect('crear_solicitud_usuario')
-            
+
         campos = formulario_solicitud.campos.all().order_by('orden')
 
         errores = []
-        
+
         # Validar campos requeridos
         for campo in campos:
             if campo.requerido:
                 if campo.tipo == 'file':
                     archivos = request.FILES.getlist(f'campo_{campo.id}')
                     if not archivos:
-                        errores.append(f'El campo "{campo.etiqueta}" es obligatorio')
+                        errores.append(
+                            f'El campo "{campo.etiqueta}" es obligatorio')
                 else:
                     valor = request.POST.get(f'campo_{campo.id}', '').strip()
                     if not valor:
-                        errores.append(f'El campo "{campo.etiqueta}" es obligatorio')
+                        errores.append(
+                            f'El campo "{campo.etiqueta}" es obligatorio')
 
         if errores:
             for error in errores:
@@ -705,8 +711,7 @@ def crear_solicitud_usuario(request):
             solicitud = Solicitud.objects.create(
                 usuario=request.user,
                 tipo_solicitud=tipo,
-                folio=folio,
-                estatus='1'  # Creada
+                folio=folio
             )
 
             # Guardar las respuestas
@@ -743,7 +748,8 @@ def crear_solicitud_usuario(request):
                 observaciones='Solicitud creada por el usuario'
             )
 
-            messages.success(request, f'Solicitud creada exitosamente. Folio: {folio}')
+            messages.success(
+                request, f'Solicitud creada exitosamente. Folio: {folio}')
             return redirect('mis_solicitudes')
 
     context = {
@@ -754,16 +760,26 @@ def crear_solicitud_usuario(request):
     }
     return render(request, 'tipo_solicitudes/crear_solicitud.html', context)
 
+
 @login_required
 def mis_solicitudes(request):
     """Vista para que el usuario vea sus propias solicitudes"""
+    from django.db.models import OuterRef, Subquery
+    
+    # Obtener el último estatus de cada solicitud
+    ultimo_seguimiento = SeguimientoSolicitud.objects.filter(
+        solicitud=OuterRef('pk')
+    ).order_by('-fecha_creacion')
+    
     solicitudes = Solicitud.objects.filter(
         usuario=request.user
+    ).annotate(
+        ultimo_estatus=Subquery(ultimo_seguimiento.values('estatus')[:1])
     ).order_by('-fecha_creacion')
 
     estatus_filtro = request.GET.get('estatus')
     if estatus_filtro:
-        solicitudes = solicitudes.filter(estatus=estatus_filtro)
+        solicitudes = solicitudes.filter(ultimo_estatus=estatus_filtro)
 
     context = {
         'solicitudes': solicitudes,

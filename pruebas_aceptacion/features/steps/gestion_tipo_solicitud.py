@@ -4,7 +4,8 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-#===GIVEN
+# ===GIVEN
+
 
 @given(u'navego a la lista de tipos de solicitudes')
 def step_impl(context):
@@ -22,37 +23,41 @@ def step_impl(context):
 def step_impl(context, nombre):
     context.driver.get(f"{context.url}/tipo-solicitud/")
     time.sleep(1)
-    
+
     wait = WebDriverWait(context.driver, 10)
-    body = wait.until(EC.presence_of_element_located((By.ID, 'bodyTipoSolicitudes')))
+    body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'bodyTipoSolicitudes')))
     trs = body.find_elements(By.TAG_NAME, 'tr')
     existe = False
-    
+
     for tr in trs:
         tds = tr.find_elements(By.TAG_NAME, 'td')
         if tds and len(tds) > 0 and tds[0].text == nombre:
             existe = True
             break
-    
+
     if not existe:
         context.driver.get(f"{context.url}/tipo-solicitud/agregar/")
         time.sleep(1)
         context.driver.find_element(By.NAME, 'nombre').send_keys(nombre)
-        context.driver.find_element(By.NAME, 'descripcion').send_keys('Descripción de prueba')
+        context.driver.find_element(
+            By.NAME, 'descripcion').send_keys('Descripción de prueba')
         select_element = context.driver.find_element(By.NAME, 'responsable')
         select = Select(select_element)
         select.select_by_value('1')
-        submit_btn = context.driver.find_element(By.XPATH, "//button[@type='submit']")
-        context.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", submit_btn)
+        submit_btn = context.driver.find_element(
+            By.XPATH, "//button[@type='submit']")
+        context.driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center'});", submit_btn)
         time.sleep(0.5)
         submit_btn.click()
         time.sleep(2)
-    
+
     context.driver.get(f"{context.url}/tipo-solicitud/agregar/")
     time.sleep(1)
 
 
-#===WHEN
+# ===WHEN
 
 @when(u'lleno el campo "{campo}" con "{valor}"')
 def step_impl(context, campo, valor):
@@ -73,14 +78,14 @@ def step_impl(context, campo):
 def step_impl(context, responsable):
     select_element = context.driver.find_element(By.NAME, 'responsable')
     select = Select(select_element)
-    
+
     responsables = {
         'Control escolar': '1',
         'Responsable de programa': '2',
         'Responsable de tutorías': '3',
         'Director': '4'
     }
-    
+
     select.select_by_value(responsables.get(responsable, '1'))
     time.sleep(0.5)
 
@@ -107,7 +112,7 @@ def step_impl(context, campo, cantidad):
     time.sleep(0.5)
 
 
-#===THEN
+# ===THEN
 
 @then(u'puedo ver el tipo "{nombre}" en la lista de tipos de solicitudes')
 def step_impl(context, nombre):
@@ -115,24 +120,26 @@ def step_impl(context, nombre):
     if not context.driver.current_url.endswith('/tipo-solicitud/'):
         context.driver.get(f"{context.url}/tipo-solicitud/")
         time.sleep(1)
-    
+
     wait = WebDriverWait(context.driver, 10)
-    body = wait.until(EC.presence_of_element_located((By.ID, 'bodyTipoSolicitudes')))
+    body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'bodyTipoSolicitudes')))
     trs = body.find_elements(By.TAG_NAME, 'tr')
     tipos_solicitud = []
-    
+
     for tr in trs:
         tds = tr.find_elements(By.TAG_NAME, 'td')
         if tds and len(tds) > 0:
             tipos_solicitud.append(tds[0].text)
-    
+
     assert nombre in tipos_solicitud, f"No se encontró '{nombre}' en la lista: {tipos_solicitud}"
     time.sleep(1)
 
 
 @then(u'veo un mensaje de éxito')
 def step_impl(context):
-    assert context.driver.current_url.endswith('/tipo-solicitud/'), "No se redirigió correctamente"
+    assert context.driver.current_url.endswith(
+        '/tipo-solicitud/'), "No se redirigió correctamente"
     time.sleep(0.5)
 
 
@@ -149,17 +156,18 @@ def step_impl(context, nombre):
     if not context.driver.current_url.endswith('/tipo-solicitud/'):
         context.driver.get(f"{context.url}/tipo-solicitud/")
         time.sleep(1)
-    
+
     wait = WebDriverWait(context.driver, 10)
-    body = wait.until(EC.presence_of_element_located((By.ID, 'bodyTipoSolicitudes')))
+    body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'bodyTipoSolicitudes')))
     trs = body.find_elements(By.TAG_NAME, 'tr')
     tipos_solicitud = []
-    
+
     for tr in trs:
         tds = tr.find_elements(By.TAG_NAME, 'td')
         if tds and len(tds) > 0:
             tipos_solicitud.append(tds[0].text)
-    
+
     assert nombre in tipos_solicitud, f"No se encontró '{nombre}' en la lista"
     time.sleep(1)
 
@@ -169,11 +177,13 @@ def step_impl(context, cantidad):
     if not context.driver.current_url.endswith('/tipo-solicitud/'):
         context.driver.get(f"{context.url}/tipo-solicitud/")
         time.sleep(1)
-    
+
     wait = WebDriverWait(context.driver, 10)
-    body = wait.until(EC.presence_of_element_located((By.ID, 'bodyTipoSolicitudes')))
+    body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'bodyTipoSolicitudes')))
     trs = body.find_elements(By.TAG_NAME, 'tr')
-    numero_actual = len([tr for tr in trs if tr.find_elements(By.TAG_NAME, 'td')])
+    numero_actual = len(
+        [tr for tr in trs if tr.find_elements(By.TAG_NAME, 'td')])
     assert numero_actual >= cantidad, f"El resultado {numero_actual} no aumentó correctamente"
     time.sleep(0.5)
 
@@ -182,7 +192,8 @@ def step_impl(context, cantidad):
 def step_impl(context):
     assert '/tipo-solicitud/' in context.driver.current_url, "Debería permanecer en la página de agregar"
     try:
-        error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
+        error_elements = context.driver.find_elements(
+            By.CLASS_NAME, 'errorlist')
         assert len(error_elements) > 0, "No se encontró mensaje de error"
         time.sleep(1)
     except:
@@ -204,7 +215,8 @@ def step_impl(context):
         time.sleep(1)
     else:
         try:
-            error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
+            error_elements = context.driver.find_elements(
+                By.CLASS_NAME, 'errorlist')
             if len(error_elements) == 0:
                 assert '/tipo-solicitud/' in current_url and '/lista/' not in current_url
         except:
@@ -218,17 +230,18 @@ def step_impl(context, nombre):
     if not context.driver.current_url.endswith('/tipo-solicitud/'):
         context.driver.get(f"{context.url}/tipo-solicitud/")
         time.sleep(1)
-    
+
     wait = WebDriverWait(context.driver, 10)
-    body = wait.until(EC.presence_of_element_located((By.ID, 'bodyTipoSolicitudes')))
+    body = wait.until(EC.presence_of_element_located(
+        (By.ID, 'bodyTipoSolicitudes')))
     trs = body.find_elements(By.TAG_NAME, 'tr')
     tipos_solicitud = []
-    
+
     for tr in trs:
         tds = tr.find_elements(By.TAG_NAME, 'td')
         if tds and len(tds) > 0:
             tipos_solicitud.append(tds[0].text)
-    
+
     assert nombre not in tipos_solicitud, f"Se encontró '{nombre}' en la lista cuando no debería estar"
     time.sleep(1)
 
@@ -237,8 +250,10 @@ def step_impl(context, nombre):
 def step_impl(context):
     assert '/tipo-solicitud/' in context.driver.current_url and '/lista/' not in context.driver.current_url
     try:
-        error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
-        assert len(error_elements) > 0, "No se encontró mensaje de error por límite de caracteres"
+        error_elements = context.driver.find_elements(
+            By.CLASS_NAME, 'errorlist')
+        assert len(
+            error_elements) > 0, "No se encontró mensaje de error por límite de caracteres"
     except:
         pass
     time.sleep(1)
@@ -248,8 +263,10 @@ def step_impl(context):
 def step_impl(context):
     assert '/tipo-solicitud/' in context.driver.current_url and '/lista/' not in context.driver.current_url
     try:
-        error_elements = context.driver.find_elements(By.CLASS_NAME, 'errorlist')
-        assert len(error_elements) > 0, "No se encontró mensaje de error por límite en descripción"
+        error_elements = context.driver.find_elements(
+            By.CLASS_NAME, 'errorlist')
+        assert len(
+            error_elements) > 0, "No se encontró mensaje de error por límite en descripción"
     except:
         pass
     time.sleep(1)

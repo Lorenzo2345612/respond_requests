@@ -111,7 +111,7 @@ def step_completa_demas_campos(context):
     """Completa campos con valores válidos por defecto"""
     if not hasattr(context, 'form_data'):
         context.form_data = {}
-    
+
     defaults = {
         'first_name': 'Juan',
         'last_name': 'Pérez',
@@ -120,7 +120,7 @@ def step_completa_demas_campos(context):
         'area': 'Ingeniería',
         'matricula': '12345'
     }
-    
+
     for campo, valor in defaults.items():
         if campo not in context.form_data:
             context.form_data[campo] = valor
@@ -139,7 +139,8 @@ def step_mantiene_email(context, email):
 @then('es redirigido automáticamente a la página de completar perfil')
 def step_redirigido_completar_perfil(context):
     """Verifica redirección a completar perfil"""
-    assert reverse('solicitudes_app:perfil') in context.response.redirect_chain[-1][0]
+    assert reverse(
+        'solicitudes_app:perfil') in context.response.redirect_chain[-1][0]
 
 
 @then('ve un formulario con sus datos básicos prellenados')
@@ -153,7 +154,8 @@ def step_ve_formulario_prellenado(context):
 def step_perfil_actualizado(context):
     """Verifica que el perfil se actualizó"""
     usuario = Usuario.objects.get(username=context.usuario.username)
-    assert usuario.first_name == context.form_data.get('first_name', usuario.first_name)
+    assert usuario.first_name == context.form_data.get(
+        'first_name', usuario.first_name)
 
 
 @then('el flag perfil_completo se establece en True')
@@ -172,10 +174,12 @@ def step_ve_mensaje_error(context, mensaje):
     """Verifica mensaje de error específico"""
     content = context.response.content.decode('utf-8')
     # Más flexible: busca palabras clave del mensaje
-    palabras_clave = [p for p in mensaje.lower().split() if len(p) > 2]  # Ignora palabras muy cortas
+    # Ignora palabras muy cortas
+    palabras_clave = [p for p in mensaje.lower().split() if len(p) > 2]
     content_lower = content.lower()
     # Verifica que al menos 2 palabras clave o 40% del mensaje estén presentes
-    palabras_encontradas = sum(1 for palabra in palabras_clave if palabra in content_lower)
+    palabras_encontradas = sum(
+        1 for palabra in palabras_clave if palabra in content_lower)
     umbral = max(2, len(palabras_clave) * 0.4)
     assert palabras_encontradas >= umbral, \
         f"Mensaje esperado: '{mensaje}'. Solo {palabras_encontradas}/{len(palabras_clave)} palabras significativas encontradas en respuesta"
@@ -193,4 +197,5 @@ def step_perfil_actualizado_sin_error_duplicado(context):
     usuario = Usuario.objects.get(username=context.usuario.username)
     assert usuario.perfil_completo is True
     # Verifica que no hay errores en la respuesta
-    assert context.response.status_code == 200 or len(context.response.redirect_chain) > 0
+    assert context.response.status_code == 200 or len(
+        context.response.redirect_chain) > 0

@@ -65,10 +65,13 @@ def step_usuario_autenticado(context):
     # Solo verificar si la respuesta fue exitosa (200 o redirect)
     if hasattr(context.client, 'session'):
         # Si hay sesión, verificar autenticación
-        if context.response.status_code == 200 and '/registro/' not in context.response.request.get('PATH_INFO', ''):
+        path_info = context.response.request.get('PATH_INFO', '')
+        if context.response.status_code == 200 and '/registro/' not in path_info:
             # Solo verificar autenticación si salimos de la página de registro
-            assert '_auth_user_id' in context.client.session or context.response.status_code in [200, 302]
-        # Si seguimos en registro, puede que haya error de validación (aceptable)
+            assert '_auth_user_id' in context.client.session or (
+                context.response.status_code in [200, 302]
+            )
+        # Si seguimos en registro, puede que haya error de validación
     else:
         # Sin sesión, solo verificar que no hubo error 500
         assert context.response.status_code != 500
@@ -90,19 +93,20 @@ def step_existe_usuario(context, username):
         ]
         errors_found = []
         for pattern in error_patterns:
-            matches = re.findall(pattern, context.registro_errors, re.IGNORECASE)
+            matches = re.findall(
+                pattern, context.registro_errors, re.IGNORECASE)
             errors_found.extend([m.strip() for m in matches if m.strip()])
-        
+
         # También verificar qué campos se enviaron
         sent_fields = list(context.form_data.keys())
-        
+
         error_msg = f"Usuario {username} no se creó. Campos enviados: {sent_fields}. "
         if errors_found:
             unique_errors = list(set(errors_found))[:5]
             error_msg += f"Errores: {unique_errors}"
-        
+
         raise AssertionError(error_msg)
-    
+
     assert usuario_existe
 
 
@@ -152,7 +156,8 @@ def step_completar_con_email(context, email):
 @then('ve un error indicando que el email ya está registrado')
 def step_error_email_duplicado(context):
     content = context.response.content.decode('utf-8')
-    assert 'email' in content.lower() and ('registrado' in content.lower() or 'exist' in content.lower())
+    assert 'email' in content.lower() and (
+        'registrado' in content.lower() or 'exist' in content.lower())
 
 
 @when('ingresa contraseñas diferentes en password1 y password2')
@@ -198,7 +203,7 @@ def step_completar_resto_campos(context):
     """Asegura que todos los campos requeridos estén presentes"""
     if not hasattr(context, 'form_data'):
         context.form_data = {}
-    
+
     # Campos por defecto si no están definidos
     defaults = {
         'username': 'test_user_' + str(hash(str(context.form_data))),
@@ -211,7 +216,7 @@ def step_completar_resto_campos(context):
         'password1': 'TestPass123!',
         'password2': 'TestPass123!'
     }
-    
+
     for key, value in defaults.items():
         if key not in context.form_data:
             context.form_data[key] = value
@@ -223,8 +228,10 @@ def step_ver_error_especifico(context, mensaje_error):
     content = context.response.content.decode('utf-8')
     # Buscar el mensaje o partes clave del mismo
     palabras_clave = mensaje_error.lower().split()
-    encontradas = sum(1 for palabra in palabras_clave if palabra in content.lower())
-    assert encontradas >= len(palabras_clave) // 2, f"No se encontró el error esperado: {mensaje_error}"
+    encontradas = sum(
+        1 for palabra in palabras_clave if palabra in content.lower())
+    assert encontradas >= len(
+        palabras_clave) // 2, f"No se encontró el error esperado: {mensaje_error}"
 
 
 @when('completa el formulario con last_name "{last_name}"')
@@ -311,14 +318,16 @@ def step_completar_con_passwords(context, password1, password2):
 def step_error_password_corta(context):
     """Verifica mensaje de error por contraseña muy corta"""
     content = context.response.content.decode('utf-8')
-    assert ('8' in content and 'caracter' in content.lower()) or 'corta' in content.lower() or 'short' in content.lower()
+    assert ('8' in content and 'caracter' in content.lower()
+            ) or 'corta' in content.lower() or 'short' in content.lower()
 
 
 @then('ve un error indicando que la contraseña es muy común')
 def step_error_password_comun(context):
     """Verifica mensaje de error por contraseña común"""
     content = context.response.content.decode('utf-8')
-    assert 'común' in content.lower() or 'comun' in content.lower() or 'common' in content.lower()
+    assert 'común' in content.lower(
+    ) or 'comun' in content.lower() or 'common' in content.lower()
 
 
 # ==================== GIVEN STEPS ====================
