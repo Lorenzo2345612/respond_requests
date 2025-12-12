@@ -59,6 +59,7 @@
                 ><i class="fas fa-tachometer-alt"></i><span>Bienvenida</span></a
               >
             </li>
+            {% if user.is_authenticated and user.rol == 'administrador' or user.rol == 'control_escolar' %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'lista_tipo_solicitudes' %}"
                 ><i class="fas fa-tachometer-alt"></i
@@ -71,6 +72,7 @@
                 ><span>Formularios de solicitud</span></a
                 >
               </li>
+              {% endif %}
               {% if user.is_authenticated and user.rol == 'alumno' %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'crear_solicitud_usuario' %}"
