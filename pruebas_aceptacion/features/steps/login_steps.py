@@ -52,7 +52,7 @@ def step_click_login(context):
 def step_redirigido_bienvenida(context):
     assert context.response.status_code == 200
     assert context.response.redirect_chain[-1][0] == reverse('bienvenida') or \
-           'bienvenida' in context.response.redirect_chain[-1][0]
+        'bienvenida' in context.response.redirect_chain[-1][0]
 
 
 @then('ve el mensaje "{mensaje}"')
@@ -82,7 +82,8 @@ def step_redirigido_login(context):
         assert context.response.status_code == 200
         # Verificar que la última URL en la cadena de redirecciones contiene login
         last_url = context.response.redirect_chain[-1][0]
-        assert 'login' in last_url.lower(), f"Expected login in URL but got {last_url}"
+        assert 'login' in last_url.lower(
+        ), f"Expected login in URL but got {last_url}"
     else:
         # Redirección sin follow
         assert context.response.status_code == 302
@@ -91,4 +92,5 @@ def step_redirigido_login(context):
 
 @when('el usuario hace clic en cerrar sesión')
 def step_cerrar_sesion(context):
-    context.response = context.client.get(reverse('solicitudes_app:logout'), follow=True)
+    context.response = context.client.get(
+        reverse('solicitudes_app:logout'), follow=True)

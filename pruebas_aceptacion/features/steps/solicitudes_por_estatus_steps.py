@@ -8,6 +8,7 @@ from tipo_solicitudes.models import Solicitud, TipoSolicitud, SeguimientoSolicit
 from django.contrib.auth import get_user_model
 from django.test import Client
 
+
 @given(u'existen solicitudes en estatus Creada, En proceso y Terminada')
 def step_impl(context):
     Solicitud.objects.all().delete()
@@ -43,15 +44,17 @@ def step_impl(context):
                 observaciones=f"Seguimiento con estatus {estatus}"
             )
 
+
 @when(u'ingreso al dashboard de métricas')
 def step_impl(context):
     """Se loguea y navega a la página de métricas reutilizando la lógica correcta."""
     client = Client()
-    login_successful = client.login(username="admin", password=context.admin_password)
+    login_successful = client.login(
+        username="admin", password=context.admin_password)
     assert login_successful, "El inicio de sesión en el backend de Django falló."
 
     session_cookie = client.cookies['sessionid']
-    
+
     context.driver.get("http://127.0.0.1:8000/solicitudes/")
     context.driver.add_cookie({
         'name': 'sessionid',
@@ -80,7 +83,8 @@ def step_impl(context):
         for row in rows:
             cols = row.find_elements(By.TAG_NAME, "td")
             if len(cols) == 2:
-                estatus = cols[0].find_element(By.TAG_NAME, "span").text.strip()
+                estatus = cols[0].find_element(
+                    By.TAG_NAME, "span").text.strip()
                 cantidad = int(cols[1].text.strip())
                 estatus_vistos[estatus] = cantidad
 
@@ -91,11 +95,13 @@ def step_impl(context):
             "Cancelada": 0
         }
 
-        assert len(estatus_vistos) == len(expected_counts), f"Se esperaban {len(expected_counts)} estatus pero se encontraron {len(estatus_vistos)}"
+        assert len(estatus_vistos) == len(
+            expected_counts), f"Se esperaban {len(expected_counts)} estatus pero se encontraron {len(estatus_vistos)}"
 
         for estatus, count in expected_counts.items():
             assert estatus in estatus_vistos, f"El estatus '{estatus}' no fue encontrado en la tabla."
             assert estatus_vistos[estatus] == count, f"Para '{estatus}', se esperaba {count} pero se encontró {estatus_vistos[estatus]}"
 
     except TimeoutException:
-        raise AssertionError("La tabla de estatus no cargó a tiempo o el selector es incorrecto.")
+        raise AssertionError(
+            "La tabla de estatus no cargó a tiempo o el selector es incorrecto.")

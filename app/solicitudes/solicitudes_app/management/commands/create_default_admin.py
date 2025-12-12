@@ -8,11 +8,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         username = 'admin'
         password_default = 'admin'
-        
+
         # Verificar si el usuario admin ya existe
         if Usuario.objects.filter(username=username).exists():
             admin_user = Usuario.objects.get(username=username)
-            
+
             # Solo resetear si ya cambió la contraseña anteriormente
             # (esto evita resetear en cada reinicio del contenedor)
             if not admin_user.debe_cambiar_password:
@@ -37,7 +37,7 @@ class Command(BaseCommand):
                     )
                 )
                 return
-        
+
         # Crear usuario admin por defecto
         admin_user = Usuario.objects.create_user(
             username=username,
@@ -50,12 +50,12 @@ class Command(BaseCommand):
             is_staff=True,
             is_superuser=True
         )
-        
+
         # Marcar que debe cambiar contraseña y completar perfil
         admin_user.debe_cambiar_password = True
         admin_user.perfil_completo = False
         admin_user.save()
-        
+
         self.stdout.write(
             self.style.SUCCESS(
                 f'Usuario administrador creado exitosamente:\n'

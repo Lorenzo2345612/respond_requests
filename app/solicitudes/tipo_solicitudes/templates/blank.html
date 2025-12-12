@@ -71,6 +71,20 @@
                 ><span>Formularios de solicitud</span></a
                 >
               </li>
+              {% if user.is_authenticated and user.rol == 'alumno' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'crear_solicitud_usuario' %}"
+                ><i class="fas fa-plus-circle"></i
+                ><span>Crear Solicitud</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'mis_solicitudes' %}"
+                ><i class="fas fa-list-alt"></i
+                ><span>Mis Solicitudes</span></a
+              >
+            </li>
+             {% endif %}
             {% if user.is_authenticated and user.puede_atender_solicitudes %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'listar_solicitudes' %}"

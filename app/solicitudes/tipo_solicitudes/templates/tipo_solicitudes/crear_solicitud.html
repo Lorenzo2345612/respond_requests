@@ -7,7 +7,6 @@
     <h1 class="mb-4">Crear Nueva Solicitud</h1>
     
     {% if not tipo_seleccionado %}
-    <!-- Seleccionar tipo de solicitud -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Selecciona el tipo de solicitud</h6>
@@ -37,7 +36,6 @@
         </div>
     </div>
     {% else %}
-    <!-- Formulario de solicitud -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">
@@ -51,7 +49,7 @@
             </div>
             {% endif %}
             
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" id="formSolicitud">
                 {% csrf_token %}
                 
                 {% for campo in campos %}
@@ -97,7 +95,6 @@
                                 name="campo_{{ campo.id }}"
                                 {% if campo.requerido %}required{% endif %}>
                             <option value="">Selecciona una opción</option>
-                            {# CORREGIDO: usar filtro split en vez de .split ',' en el for #}
                             {% for opcion in campo.opciones|split:"," %}
                             <option value="{{ opcion }}">{{ opcion }}</option>
                             {% endfor %}
@@ -105,14 +102,19 @@
                     
                     {% elif campo.tipo == 'file' %}
                         <input type="file" 
-                               class="form-control" 
+                               class="form-control archivo-input" 
                                id="campo_{{ campo.id }}" 
                                name="campo_{{ campo.id }}"
+                               accept=".pdf,.jpg,.jpeg,.png,.gif"
                                multiple
+                               data-max-files="{{ campo.cantidad_archivos }}"
                                {% if campo.requerido %}required{% endif %}>
                         <small class="form-text text-muted">
-                            Puedes subir hasta {{ campo.cantidad_archivos }} archivo(s)
+                            <i class="fas fa-info-circle"></i> 
+                            Puedes subir hasta {{ campo.cantidad_archivos }} archivo(s). 
+                            Formatos permitidos: PDF, JPG, PNG, GIF. Tamaño máximo por archivo: 2MB
                         </small>
+                        <div id="preview_{{ campo.id }}" class="mt-2"></div>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -121,7 +123,7 @@
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i> Enviar Solicitud
                     </button>
-                    <a href="{% url 'crear_solicitud_usuario' %}" class="btn btn-secondary">
+                    <a href="{% url 'crear_solicitud_usuario' %}" class="btn btn-secondary ml-2">
                         <i class="fas fa-arrow-left"></i> Volver
                     </a>
                 </div>
@@ -130,4 +132,65 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const archivoInputs = document.querySelectorAll('.archivo-input');
+    
+    archivoInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const maxFiles = parseInt(this.dataset.maxFiles);
+            const previewDiv = document.getElementById('preview_' + this.id.split('_')[1]);
+            const maxSize = 2 * 1024 * 1024; // 2MB
+            const allowedTypes = ['.pdf', '.jpg', '.jpeg', '.png', '.gif'];
+            
+            previewDiv.innerHTML = '';
+            
+            if (files.length > maxFiles) {
+                alert(`Solo puedes subir máximo ${maxFiles} archivo(s)`);
+                this.value = '';
+                return;
+            }
+            
+            let todosValidos = true;
+            files.forEach(file => {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                
+                if (!allowedTypes.includes(ext)) {
+                    alert(`Archivo "${file.name}" no permitido. Solo se aceptan: PDF, JPG, PNG, GIF`);
+                    todosValidos = false;
+                    return;
+                }
+                
+                if (file.size > maxSize) {
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    alert(`Archivo "${file.name}" es muy grande (${sizeMB}MB). Tamaño máximo: 2MB`);
+                    todosValidos = false;
+                    return;
+                }
+                
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'alert alert-success alert-sm p-2 mb-1';
+                fileInfo.innerHTML = `
+                    <i class="fas fa-file"></i> ${file.name} 
+                    <small class="text-muted">(${(file.size / 1024).toFixed(2)} KB)</small>
+                `;
+                previewDiv.appendChild(fileInfo);
+            });
+            
+            if (!todosValidos) {
+                this.value = '';
+                previewDiv.innerHTML = '';
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.gap-2 {
+    gap: 0.5rem;
+}
+</style>
 {% endblock contenido %}

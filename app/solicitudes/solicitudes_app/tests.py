@@ -8,7 +8,7 @@ class UsuarioModelTest(TestCase):
     """
     Pruebas unitarias para el modelo Usuario
     """
-    
+
     def setUp(self):
         """Configuración inicial para las pruebas"""
         self.usuario_alumno = Usuario.objects.create_user(
@@ -20,7 +20,7 @@ class UsuarioModelTest(TestCase):
             rol='alumno',
             matricula='12345'
         )
-        
+
         self.usuario_admin = Usuario.objects.create_user(
             username='admin1',
             email='admin@test.com',
@@ -29,7 +29,7 @@ class UsuarioModelTest(TestCase):
             last_name='Sistema',
             rol='administrador'
         )
-        
+
         self.usuario_control = Usuario.objects.create_user(
             username='control1',
             email='control@test.com',
@@ -38,45 +38,45 @@ class UsuarioModelTest(TestCase):
             last_name='Escolar',
             rol='control_escolar'
         )
-    
+
     def test_crear_usuario_con_rol(self):
         """Prueba que se puede crear un usuario con rol específico"""
         self.assertEqual(self.usuario_alumno.rol, 'alumno')
         self.assertEqual(self.usuario_admin.rol, 'administrador')
         self.assertEqual(self.usuario_control.rol, 'control_escolar')
-    
+
     def test_str_usuario(self):
         """Prueba el método __str__ del usuario"""
         expected = f"{self.usuario_alumno.get_full_name()} (Alumno)"
         self.assertEqual(str(self.usuario_alumno), expected)
-    
+
     def test_puede_crear_tipo_solicitud(self):
         """Prueba que solo control escolar y admin pueden crear tipos de solicitud"""
         self.assertFalse(self.usuario_alumno.puede_crear_tipo_solicitud())
         self.assertTrue(self.usuario_admin.puede_crear_tipo_solicitud())
         self.assertTrue(self.usuario_control.puede_crear_tipo_solicitud())
-    
+
     def test_puede_atender_solicitudes(self):
         """Prueba que los roles apropiados pueden atender solicitudes"""
         self.assertFalse(self.usuario_alumno.puede_atender_solicitudes())
         self.assertTrue(self.usuario_control.puede_atender_solicitudes())
-    
+
     def test_puede_ver_dashboard(self):
         """Prueba que solo el administrador puede ver el dashboard"""
         self.assertFalse(self.usuario_alumno.puede_ver_dashboard())
         self.assertFalse(self.usuario_control.puede_ver_dashboard())
         self.assertTrue(self.usuario_admin.puede_ver_dashboard())
-    
+
     def test_puede_gestionar_usuarios(self):
         """Prueba que solo el administrador puede gestionar usuarios"""
         self.assertFalse(self.usuario_alumno.puede_gestionar_usuarios())
         self.assertFalse(self.usuario_control.puede_gestionar_usuarios())
         self.assertTrue(self.usuario_admin.puede_gestionar_usuarios())
-    
+
     def test_matricula_alumno(self):
         """Prueba que los alumnos tienen matrícula"""
         self.assertEqual(self.usuario_alumno.matricula, '12345')
-    
+
     def test_usuario_activo_por_defecto(self):
         """Prueba que los usuarios están activos por defecto"""
         self.assertTrue(self.usuario_alumno.is_active)
@@ -86,7 +86,7 @@ class RegistroUsuarioFormTest(TestCase):
     """
     Pruebas unitarias para el formulario de registro
     """
-    
+
     def test_formulario_valido_alumno(self):
         """Prueba que el formulario es válido con datos correctos de alumno"""
         form_data = {
@@ -102,7 +102,7 @@ class RegistroUsuarioFormTest(TestCase):
         }
         form = RegistroUsuarioForm(data=form_data)
         self.assertTrue(form.is_valid())
-    
+
     def test_formulario_invalido_alumno_sin_matricula(self):
         """Prueba que el formulario es inválido si un alumno no tiene matrícula"""
         form_data = {
@@ -118,7 +118,7 @@ class RegistroUsuarioFormTest(TestCase):
         form = RegistroUsuarioForm(data=form_data)
         self.assertFalse(form.is_valid())
         self.assertIn('matricula', form.errors)
-    
+
     def test_formulario_invalido_email_duplicado(self):
         """Prueba que no se puede registrar con un email ya existente"""
         # Crear usuario existente
@@ -127,7 +127,7 @@ class RegistroUsuarioFormTest(TestCase):
             email='existente@test.com',
             password='testpass123'
         )
-        
+
         form_data = {
             'username': 'nuevo_usuario',
             'email': 'existente@test.com',  # Email duplicado
@@ -141,7 +141,7 @@ class RegistroUsuarioFormTest(TestCase):
         form = RegistroUsuarioForm(data=form_data)
         self.assertFalse(form.is_valid())
         self.assertIn('email', form.errors)
-    
+
     def test_formulario_valido_sin_matricula_para_no_alumno(self):
         """Prueba que otros roles no necesitan matrícula"""
         form_data = {
@@ -162,7 +162,7 @@ class LoginViewTest(TestCase):
     """
     Pruebas unitarias para la vista de login
     """
-    
+
     def setUp(self):
         """Configuración inicial"""
         self.client = Client()
@@ -173,13 +173,13 @@ class LoginViewTest(TestCase):
             password='testpass123',
             rol='alumno'
         )
-    
+
     def test_login_view_get(self):
         """Prueba que la página de login se carga correctamente"""
         response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'solicitudes_app/login.html')
-    
+
     def test_login_exitoso(self):
         """Prueba un login exitoso"""
         response = self.client.post(self.login_url, {
@@ -188,7 +188,7 @@ class LoginViewTest(TestCase):
         })
         self.assertEqual(response.status_code, 302)  # Redirección
         self.assertTrue(response.url, reverse('bienvenida'))
-    
+
     def test_login_fallido_credenciales_incorrectas(self):
         """Prueba login con credenciales incorrectas"""
         response = self.client.post(self.login_url, {
@@ -197,7 +197,7 @@ class LoginViewTest(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Usuario o contraseña incorrectos')
-    
+
     def test_login_redirige_si_ya_autenticado(self):
         """Prueba que usuarios autenticados son redirigidos"""
         self.client.login(username='testuser', password='testpass123')
@@ -209,18 +209,18 @@ class RegistroViewTest(TestCase):
     """
     Pruebas unitarias para la vista de registro
     """
-    
+
     def setUp(self):
         """Configuración inicial"""
         self.client = Client()
         self.registro_url = reverse('solicitudes_app:registro')
-    
+
     def test_registro_view_get(self):
         """Prueba que la página de registro se carga correctamente"""
         response = self.client.get(self.registro_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'solicitudes_app/registro.html')
-    
+
     def test_registro_exitoso(self):
         """Prueba un registro exitoso"""
         form_data = {
@@ -236,7 +236,7 @@ class RegistroViewTest(TestCase):
         response = self.client.post(self.registro_url, form_data)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Usuario.objects.filter(username='nuevouser').exists())
-    
+
     def test_registro_usuario_autenticado_automaticamente(self):
         """Prueba que el usuario se autentica automáticamente después del registro"""
         form_data = {
@@ -258,7 +258,7 @@ class PerfilViewTest(TestCase):
     """
     Pruebas unitarias para la vista de perfil
     """
-    
+
     def setUp(self):
         """Configuración inicial"""
         self.client = Client()
@@ -271,20 +271,20 @@ class PerfilViewTest(TestCase):
             last_name='User',
             rol='alumno'
         )
-    
+
     def test_perfil_requiere_autenticacion(self):
         """Prueba que la vista de perfil requiere autenticación"""
         response = self.client.get(self.perfil_url)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith('/auth/login/'))
-    
+
     def test_perfil_view_autenticado(self):
         """Prueba que usuarios autenticados pueden ver su perfil"""
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(self.perfil_url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'solicitudes_app/perfil.html')
-    
+
     def test_actualizar_perfil(self):
         """Prueba que se puede actualizar el perfil"""
         self.client.login(username='testuser', password='testpass123')
@@ -306,47 +306,48 @@ class GestionUsuariosViewTest(TestCase):
     """
     Pruebas unitarias para las vistas de gestión de usuarios
     """
-    
+
     def setUp(self):
         """Configuración inicial"""
         self.client = Client()
         self.lista_usuarios_url = reverse('solicitudes_app:lista_usuarios')
-        
+
         self.admin = Usuario.objects.create_user(
             username='admin',
             email='admin@test.com',
             password='testpass123',
             rol='administrador'
         )
-        
+
         self.alumno = Usuario.objects.create_user(
             username='alumno',
             email='alumno@test.com',
             password='testpass123',
             rol='alumno'
         )
-    
+
     def test_lista_usuarios_requiere_admin(self):
         """Prueba que solo administradores pueden ver la lista de usuarios"""
         # Sin autenticación
         response = self.client.get(self.lista_usuarios_url)
         self.assertEqual(response.status_code, 302)
-        
+
         # Como alumno
         self.client.login(username='alumno', password='testpass123')
         response = self.client.get(self.lista_usuarios_url)
         self.assertEqual(response.status_code, 302)
-        
+
         # Como administrador
         self.client.login(username='admin', password='testpass123')
         response = self.client.get(self.lista_usuarios_url)
         self.assertEqual(response.status_code, 200)
-    
+
     def test_editar_usuario_como_admin(self):
         """Prueba que el administrador puede editar usuarios"""
         self.client.login(username='admin', password='testpass123')
-        editar_url = reverse('solicitudes_app:editar_usuario', args=[self.alumno.id])
-        
+        editar_url = reverse(
+            'solicitudes_app:editar_usuario', args=[self.alumno.id])
+
         response = self.client.post(editar_url, {
             'username': 'alumno',
             'email': 'alumno_nuevo@test.com',
@@ -358,25 +359,27 @@ class GestionUsuariosViewTest(TestCase):
             'matricula': '12345',
             'is_active': True
         })
-        
+
         self.assertEqual(response.status_code, 302)
         self.alumno.refresh_from_db()
         self.assertEqual(self.alumno.email, 'alumno_nuevo@test.com')
-    
+
     def test_eliminar_usuario_como_admin(self):
         """Prueba que el administrador puede eliminar usuarios"""
         self.client.login(username='admin', password='testpass123')
-        eliminar_url = reverse('solicitudes_app:eliminar_usuario', args=[self.alumno.id])
-        
+        eliminar_url = reverse(
+            'solicitudes_app:eliminar_usuario', args=[self.alumno.id])
+
         response = self.client.post(eliminar_url)
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Usuario.objects.filter(id=self.alumno.id).exists())
-    
+
     def test_admin_no_puede_eliminarse_a_si_mismo(self):
         """Prueba que el administrador no puede eliminar su propia cuenta"""
         self.client.login(username='admin', password='testpass123')
-        eliminar_url = reverse('solicitudes_app:eliminar_usuario', args=[self.admin.id])
-        
+        eliminar_url = reverse(
+            'solicitudes_app:eliminar_usuario', args=[self.admin.id])
+
         response = self.client.post(eliminar_url)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Usuario.objects.filter(id=self.admin.id).exists())
@@ -386,7 +389,7 @@ class LogoutViewTest(TestCase):
     """
     Pruebas unitarias para la vista de logout
     """
-    
+
     def setUp(self):
         """Configuración inicial"""
         self.client = Client()
@@ -397,7 +400,7 @@ class LogoutViewTest(TestCase):
             password='testpass123',
             rol='alumno'
         )
-    
+
     def test_logout_exitoso(self):
         """Prueba que el logout funciona correctamente"""
         self.client.login(username='testuser', password='testpass123')

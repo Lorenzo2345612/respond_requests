@@ -2,10 +2,12 @@
 from django.test import TestCase
 from atender_solicitudes.forms import CerrarSolicitudForm
 
+
 class SmokeAtenderSolicitudesTests(TestCase):
     def test_smoke(self):
         self.assertTrue(True)
-        
+
+
 class CerrarSolicitudFormTests(TestCase):
     def test_form_valido_con_datos_correctos(self):
         data = {

@@ -3,18 +3,18 @@
 {% block contenido %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Mis Solicitudes</h1>
+        <h2>Mis Solicitudes</h2>
         <a href="{% url 'crear_solicitud_usuario' %}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Nueva Solicitud
         </a>
     </div>
-    
+
     <!-- Filtros -->
     <div class="card shadow mb-4">
         <div class="card-body">
             <form method="get" class="form-inline">
-                <label class="mr-2">Filtrar por estatus:</label>
-                <select name="estatus" class="form-control mr-2" onchange="this.form.submit()">
+                <label class="mr-2">Filtrar por estado:</label>
+                <select name="estatus" class="form-control mr-2">
                     <option value="">Todos</option>
                     {% for codigo, nombre in estatus_choices %}
                     <option value="{{ codigo }}" {% if estatus_filtro == codigo %}selected{% endif %}>
@@ -22,69 +22,57 @@
                     </option>
                     {% endfor %}
                 </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
                 {% if estatus_filtro %}
-                <a href="{% url 'mis_solicitudes' %}" class="btn btn-secondary btn-sm">
+                <a href="{% url 'mis_solicitudes' %}" class="btn btn-secondary ml-2">
                     <i class="fas fa-times"></i> Limpiar
                 </a>
                 {% endif %}
             </form>
         </div>
     </div>
-    
+
     <!-- Tabla de solicitudes -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Lista de Solicitudes</h6>
-        </div>
+    <div class="card shadow">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead>
+                <table class="table table-bordered table-striped">
+                    <thead style="background-color: #4e73df; color: white;">
                         <tr>
                             <th>Folio</th>
                             <th>Tipo</th>
-                            <th>Fecha Creación</th>
-                            <th>Estatus</th>
-                            <th>Acciones</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for solicitud in solicitudes %}
+                        {% for s in solicitudes %}
                         <tr>
-                            <td><strong>{{ solicitud.folio }}</strong></td>
-                            <td>{{ solicitud.tipo_solicitud.nombre }}</td>
-                            <td>{{ solicitud.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            <td><strong>{{ s.folio }}</strong></td>
+                            <td>{{ s.tipo_solicitud.nombre }}</td>
+                            <td>{{ s.fecha_creacion|date:"d/m/Y H:i" }}</td>
                             <td>
-                                {% if solicitud.estatus == '1' %}
-                                <span class="badge badge-info">{{ solicitud.get_estatus_display }}</span>
-                                {% elif solicitud.estatus == '2' %}
-                                <span class="badge badge-warning">{{ solicitud.get_estatus_display }}</span>
-                                {% elif solicitud.estatus == '3' %}
-                                <span class="badge badge-success">{{ solicitud.get_estatus_display }}</span>
-                                {% elif solicitud.estatus == '4' %}
-                                <span class="badge badge-danger">{{ solicitud.get_estatus_display }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'detalle_solicitud' solicitud.id %}" 
-                                   class="btn btn-sm btn-info" 
-                                   title="Ver detalle">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'seguimiento_solicitud' solicitud.id %}" 
-                                   class="btn btn-sm btn-primary" 
-                                   title="Ver seguimiento">
-                                    <i class="fas fa-list"></i>
-                                </a>
+                                {% with estatus=s.ultimo_estatus|default:s.estatus %}
+                                    {% if estatus == '1' %}
+                                        <span class="badge badge-info" style="color: black;">Creada</span>
+                                    {% elif estatus == '2' %}
+                                        <span class="badge badge-warning" style="color: black;">En Proceso</span>
+                                    {% elif estatus == '3' %}
+                                        <span class="badge badge-success" style="color: black;">Terminada</span>
+                                    {% elif estatus == '4' %}
+                                        <span class="badge badge-danger" style="color: black;">Cancelada</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary" style="color: rgb(255, 255, 255);">{{ s.get_estatus_display }}</span>
+                                    {% endif %}
+                                {% endwith %}
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
                             <td colspan="5" class="text-center">
-                                <div class="alert alert-info mb-0">
-                                    No tienes solicitudes {% if estatus_filtro %}con este estatus{% endif %}.
-                                    <a href="{% url 'crear_solicitud_usuario' %}">Crear una nueva</a>
-                                </div>
+                                <p class="text-muted mb-0">Aún no has creado solicitudes.</p>
                             </td>
                         </tr>
                         {% endfor %}

@@ -30,13 +30,15 @@ def atender_solicitud(request, solicitud_id: int):
     ultimo = solicitud.seguimientos.order_by('-fecha_creacion').first()
     responsable_rol = MATCH_RESPONSABLES.get(request.user.rol) or "5"
     if solicitud.tipo_solicitud.responsable != responsable_rol:
-        messages.error(request, 'No tienes permiso para atender esta solicitud.')
+        messages.error(
+            request, 'No tienes permiso para atender esta solicitud.')
         return redirect('bienvenida')
     context = {
         'solicitud': solicitud,
         'ultimo': ultimo
     }
     return render(request, 'atender_solicitud.html', context)
+
 
 @login_required
 @puede_atender_solicitudes
@@ -50,16 +52,20 @@ def marcar_solicitud_en_proceso(request, solicitud_id: int):
     ultimo = solicitud.seguimientos.order_by('-fecha_creacion').first()
     responsable_rol = MATCH_RESPONSABLES.get(request.user.rol) or "5"
     if solicitud.tipo_solicitud.responsable != responsable_rol:
-        messages.error(request, 'No tienes permiso para atender esta solicitud.')
+        messages.error(
+            request, 'No tienes permiso para atender esta solicitud.')
         return redirect('bienvenida')
     if not ultimo or ultimo.estatus != '1':
-        messages.error(request, 'No se puede cambiar el estatus: la solicitud no está en estado Creada.')
+        messages.error(
+            request, 'No se puede cambiar el estatus: la solicitud no está en estado Creada.')
         # return redirect('bienvenida')
         # Regresar JsonResponse por ahora
         return JsonResponse({'error': 'No se puede cambiar el estatus: la solicitud no está en estado Creada.'}, status=400)
-    SeguimientoSolicitud.objects.create(solicitud=solicitud, estatus='2', observaciones='')
+    SeguimientoSolicitud.objects.create(
+        solicitud=solicitud, estatus='2', observaciones='')
     messages.success(request, 'La solicitud fue marcada como En proceso.')
     return redirect('atender_solicitud', solicitud_id=solicitud_id)
+
 
 @login_required
 @puede_atender_solicitudes
@@ -67,7 +73,8 @@ def cerrar_solicitud(request, solicitud_id: int):
     solicitud = get_object_or_404(Solicitud, id=solicitud_id)
     responsable_rol = MATCH_RESPONSABLES.get(request.user.rol) or "5"
     if solicitud.tipo_solicitud.responsable != responsable_rol:
-        messages.error(request, 'No tienes permiso para atender esta solicitud.')
+        messages.error(
+            request, 'No tienes permiso para atender esta solicitud.')
         return redirect('bienvenida')
     ultimo = solicitud.seguimientos.order_by('-fecha_creacion').first()
     if not ultimo or ultimo.estatus != '2':
@@ -96,6 +103,7 @@ def cerrar_solicitud(request, solicitud_id: int):
     messages.success(request, 'Solicitud cerrada correctamente.')
     return redirect('atender_solicitud', solicitud_id=solicitud_id)
 
+
 @login_required
 @puede_atender_solicitudes
 def listar_solicitudes(request):
@@ -106,7 +114,7 @@ def listar_solicitudes(request):
         per_page = int(request.GET.get('per_page', 10))
     except ValueError:
         per_page = 10
-    
+
     # Asegurarse que el valor sea uno de los permitidos
     if per_page not in [5, 10, 25, 50]:
         per_page = 10
@@ -125,7 +133,8 @@ def listar_solicitudes(request):
 
     # Filtrar por el rol responsable si aplica (1-4). '5' es para evitar errores
     if responsable_rol in ['1', '2', '3', '4']:
-        solicitudes_qs = solicitudes_qs.filter(tipo_solicitud__responsable=responsable_rol)
+        solicitudes_qs = solicitudes_qs.filter(
+            tipo_solicitud__responsable=responsable_rol)
 
     # Conteos para tabs
     base_qs = solicitudes_qs
@@ -143,10 +152,11 @@ def listar_solicitudes(request):
     # Filtro de estatus
     if estatus and estatus in ['1', '2', '3', '4']:
         if estatus == '1':
-            solicitudes_qs = solicitudes_qs.filter(Q(ultimo_estatus='1') | Q(ultimo_estatus__isnull=True))
+            solicitudes_qs = solicitudes_qs.filter(
+                Q(ultimo_estatus='1') | Q(ultimo_estatus__isnull=True))
         else:
             solicitudes_qs = solicitudes_qs.filter(ultimo_estatus=estatus)
- 
+
     # Aplicar el mismo filtro a la base usada para conteos
     if responsable_rol in ['1', '2', '3', '4']:
         base_qs = base_qs.filter(tipo_solicitud__responsable=responsable_rol)
@@ -166,9 +176,9 @@ def listar_solicitudes(request):
     # Renderizado
     return render(request, 'solicitudes_table.html', {
         'page_obj': page_obj,
-        'solicitudes': page_obj,  
+        'solicitudes': page_obj,
         'estatus_activo': estatus or 'todos',
         'conteos': conteos,
         'search': search,
-        'per_page': per_page,  
+        'per_page': per_page,
     })

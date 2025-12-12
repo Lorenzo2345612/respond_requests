@@ -2,6 +2,7 @@ from behave import when, then, given
 from selenium.webdriver.common.by import By
 import time
 
+
 @given(u'que ingreso al sistema')
 def step_impl(context):
     context.driver.get(context.url)
@@ -20,7 +21,7 @@ def step_impl(context, nombre, descripcion):
     time.sleep(1)
 
 
-#===WHEN
+# ===WHEN
 
 @when(u'presiono el botón Agregar')
 def step_impl(context):
@@ -29,19 +30,19 @@ def step_impl(context):
     time.sleep(2)
 
 
-#===THEN
+# ===THEN
 
 @then(u'puedo ver el tipo "{nombre}" en la lista de tipos de solicitudes.')
 def step_impl(context, nombre):
     time.sleep(1)
-    
+
     if '/tipo-solicitud/lista/' not in context.driver.current_url:
         context.driver.get(f"{context.url}/tipo-solicitud/lista/")
         time.sleep(1)
     else:
         context.driver.refresh()
         time.sleep(1)
-    
+
     body = context.driver.find_element(By.ID, 'bodyTipoSolicitudes')
     trs = body.find_elements(By.TAG_NAME, 'tr')
     tipo_solicitud = []
@@ -51,5 +52,3 @@ def step_impl(context, nombre):
             tipo_solicitud.append(tds[0].text)
     assert nombre in tipo_solicitud, f"No se encontró '{nombre}' en la lista: {str(tipo_solicitud)}"
     time.sleep(1)
-
-

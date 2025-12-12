@@ -73,7 +73,8 @@ class AtenderSolicitudesViewsTests(TestCase):
             resp.url, reverse("atender_solicitud", args=[self.solicitud.id])
         )
 
-        ultimo = self.solicitud.seguimientos.order_by("-fecha_creacion").first()
+        ultimo = self.solicitud.seguimientos.order_by(
+            "-fecha_creacion").first()
         self.assertEqual(ultimo.estatus, "2")
 
     def test_marcar_en_proceso_falla_si_ultimo_no_es_creada(self):
@@ -138,7 +139,8 @@ class AtenderSolicitudesViewsTests(TestCase):
             resp.url, reverse("atender_solicitud", args=[self.solicitud.id])
         )
 
-        ultimo = self.solicitud.seguimientos.order_by("-fecha_creacion").first()
+        ultimo = self.solicitud.seguimientos.order_by(
+            "-fecha_creacion").first()
         self.assertEqual(ultimo.estatus, "3")
         self.assertEqual(ultimo.observaciones, "Atendida correctamente")
 

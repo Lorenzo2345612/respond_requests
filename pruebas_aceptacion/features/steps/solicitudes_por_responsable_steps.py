@@ -9,6 +9,7 @@ from tipo_solicitudes.models import Solicitud, TipoSolicitud, SeguimientoSolicit
 from django.contrib.auth import get_user_model
 from django.test import Client
 
+
 @given("existen solicitudes asignadas a varios responsables")
 def step_impl(context):
     """Crea varias solicitudes con diferentes responsables para pruebas."""
@@ -16,7 +17,7 @@ def step_impl(context):
     Solicitud.objects.all().delete()
     TipoSolicitud.objects.all().delete()
     SeguimientoSolicitud.objects.all().delete()
-    
+
     User = get_user_model()
     User.objects.filter(email="admin@admin.com").delete()
 
@@ -25,11 +26,12 @@ def step_impl(context):
         username="admin", email="admin@admin.com", password=admin_password
     )
     context.admin_password = admin_password
-    
+
     # Crear tipos de solicitud con distintos responsables
     responsables = ["Ana", "Luis", "Pedro"]
     for idx, resp in enumerate(responsables):
-        tipo, _ = TipoSolicitud.objects.get_or_create(nombre=f"Tipo {idx+1}", responsable=resp)
+        tipo, _ = TipoSolicitud.objects.get_or_create(
+            nombre=f"Tipo {idx+1}", responsable=resp)
         # Crear 3 solicitudes por responsable
         for i in range(3):
             solicitud = Solicitud.objects.create(
@@ -43,6 +45,7 @@ def step_impl(context):
                 observaciones='Seguimiento inicial'
             )
 
+
 @then("debo ver una tabla que muestre el responsable y el total asignado")
 def step_impl(context):
     """Verifica que la tabla muestre cada responsable con su total de solicitudes."""
@@ -54,7 +57,8 @@ def step_impl(context):
         )
 
         rows = table.find_elements(By.XPATH, ".//tbody/tr")
-        assert len(rows) > 0, "No se encontraron filas en la tabla de responsables"
+        assert len(
+            rows) > 0, "No se encontraron filas en la tabla de responsables"
 
         responsables_vistos = {}
         for row in rows:
@@ -62,17 +66,21 @@ def step_impl(context):
             if len(cols) == 2:
                 responsable = cols[0].text.strip()
                 # La cantidad esta dentro de un <span> en la segunda celda
-                cantidad_raw = cols[1].find_element(By.TAG_NAME, "span").text.strip()
+                cantidad_raw = cols[1].find_element(
+                    By.TAG_NAME, "span").text.strip()
                 total = int(''.join(filter(str.isdigit, cantidad_raw)))
                 responsables_vistos[responsable] = total
 
         expected_responsables = ["Ana", "Luis", "Pedro"]
-        assert len(responsables_vistos) == len(expected_responsables), f"Se esperaban {len(expected_responsables)} responsables pero se encontraron {len(responsables_vistos)}"
+        assert len(responsables_vistos) == len(
+            expected_responsables), f"Se esperaban {len(expected_responsables)} responsables pero se encontraron {len(responsables_vistos)}"
 
         for resp in expected_responsables:
             assert resp in responsables_vistos, f"Responsable '{resp}' no aparece en la tabla"
             assert responsables_vistos[resp] == 3, f"Responsable '{resp}' debería tener 3 solicitudes, pero tiene {responsables_vistos[resp]}"
 
     except TimeoutException:
-        print(f"DEBUG: No se pudo encontrar la tabla con el XPath: {locator_xpath}")
-        raise AssertionError("La tabla de responsables no cargó a tiempo o el selector es incorrecto.")
+        print(
+            f"DEBUG: No se pudo encontrar la tabla con el XPath: {locator_xpath}")
+        raise AssertionError(
+            "La tabla de responsables no cargó a tiempo o el selector es incorrecto.")

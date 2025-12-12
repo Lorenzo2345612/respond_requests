@@ -7,6 +7,7 @@ from tipo_solicitudes.models import Solicitud, TipoSolicitud, SeguimientoSolicit
 from django.contrib.auth import get_user_model
 from django.test import Client
 
+
 @given(u'existen varios tipos de solicitud con datos registrados')
 def step_impl(context):
     SeguimientoSolicitud.objects.all().delete()
@@ -16,7 +17,8 @@ def step_impl(context):
     User.objects.filter(email="admin@admin.com").delete()
 
     admin_password = "test_password_123"
-    context.admin_user = User.objects.create_user(username="admin", email="admin@admin.com", password=admin_password)
+    context.admin_user = User.objects.create_user(
+        username="admin", email="admin@admin.com", password=admin_password)
     context.admin_password = admin_password
 
     tipos = ["Soporte", "Mantenimiento", "Consulta", "Incidencia"]
@@ -38,14 +40,16 @@ def step_impl(context):
                 observaciones='Seguimiento inicial'
             )
 
+
 @when(u'ingreso a la página de métricas')
 def step_impl(context):
     client = Client()
-    login_successful = client.login(username="admin", password=context.admin_password)
+    login_successful = client.login(
+        username="admin", password=context.admin_password)
     assert login_successful, "El inicio de sesión en el backend de Django falló."
 
     session_cookie = client.cookies['sessionid']
-    
+
     context.driver.get("http://127.0.0.1:8000/solicitudes/")
     context.driver.add_cookie({
         'name': 'sessionid',
@@ -55,6 +59,7 @@ def step_impl(context):
     })
 
     context.driver.get("http://127.0.0.1:8000/tipo-solicitud/metricas/")
+
 
 @then(u'la tabla "Solicitudes por Tipo" debe listar cada tipo con su conteo')
 def step_impl(context):
@@ -81,7 +86,8 @@ def step_impl(context):
         "Incidencia": 4
     }
 
-    assert len(resultados) == len(esperados), f"Se encontraron {len(resultados)} filas pero se esperaban {len(esperados)}"
+    assert len(resultados) == len(
+        esperados), f"Se encontraron {len(resultados)} filas pero se esperaban {len(esperados)}"
 
     for tipo, cantidad_esperada in esperados.items():
         assert tipo in resultados, f"No se encontró el tipo '{tipo}' en la tabla"

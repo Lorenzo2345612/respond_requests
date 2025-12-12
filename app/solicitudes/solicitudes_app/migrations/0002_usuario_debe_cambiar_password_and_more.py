@@ -13,11 +13,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='usuario',
             name='debe_cambiar_password',
-            field=models.BooleanField(default=False, help_text='Indica si el usuario debe cambiar su contraseña en el próximo login'),
+            field=models.BooleanField(
+                default=False, help_text='Indica si el usuario debe cambiar su contraseña en el próximo login'),
         ),
         migrations.AddField(
             model_name='usuario',
             name='perfil_completo',
-            field=models.BooleanField(default=False, help_text='Indica si el usuario ha completado su perfil'),
+            field=models.BooleanField(
+                default=False, help_text='Indica si el usuario ha completado su perfil'),
         ),
     ]

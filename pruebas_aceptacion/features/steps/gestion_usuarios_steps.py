@@ -38,7 +38,8 @@ def step_crear_varios_usuarios(context):
 
 @when('el administrador visita la página de gestión de usuarios')
 def step_visitar_gestion_usuarios(context):
-    context.response = context.client.get(reverse('solicitudes_app:lista_usuarios'))
+    context.response = context.client.get(
+        reverse('solicitudes_app:lista_usuarios'))
 
 
 @then('ve una lista con {count:d} usuarios')
@@ -110,7 +111,8 @@ def step_guardar_cambios(context):
         'is_active': getattr(context, 'is_active', context.usuario_editado.is_active)
     }
     context.response = context.client.post(
-        reverse('solicitudes_app:editar_usuario', args=[context.usuario_editado.id]),
+        reverse('solicitudes_app:editar_usuario',
+                args=[context.usuario_editado.id]),
         data,
         follow=True
     )
@@ -201,7 +203,8 @@ def step_no_ver_boton_eliminar_propio(context):
 
 @when('el usuario intenta acceder a la página de gestión de usuarios')
 def step_intentar_acceder_gestion(context):
-    context.response = context.client.get(reverse('solicitudes_app:lista_usuarios'), follow=True)
+    context.response = context.client.get(
+        reverse('solicitudes_app:lista_usuarios'), follow=True)
 
 
 @given('que existen los siguientes usuarios en el sistema:')

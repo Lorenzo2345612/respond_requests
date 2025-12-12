@@ -90,7 +90,8 @@ def step_completar_con_email(context, email):
 @then('ve un error indicando que el email ya está registrado')
 def step_error_email_duplicado(context):
     content = context.response.content.decode('utf-8')
-    assert 'email' in content.lower() and ('registrado' in content.lower() or 'exist' in content.lower())
+    assert 'email' in content.lower() and (
+        'registrado' in content.lower() or 'exist' in content.lower())
 
 
 @when('ingresa contraseñas diferentes en password1 y password2')

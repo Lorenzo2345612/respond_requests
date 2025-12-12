@@ -2,16 +2,16 @@
 Factory para crear datos de prueba de solicitudes.
 Puede ser usado en Django TestCase o como comando de gestión.
 """
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-
-User = get_user_model()
+from datetime import timedelta
+import random
 from tipo_solicitudes.models import (
     TipoSolicitud, FormularioSolicitud, CampoFormulario,
     Solicitud, RespuestaCampo, SeguimientoSolicitud, ArchivoAdjunto
 )
-import random
-from datetime import timedelta
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+User = get_user_model()
 
 
 class SolicitudTestDataFactory:
@@ -27,11 +27,16 @@ class SolicitudTestDataFactory:
     def crear_usuarios(self, cantidad=5):
         """Crea usuarios de prueba."""
         usuarios_data = [
-            {'username': 'estudiante1', 'email': 'est1@example.com', 'first_name': 'Juan', 'last_name': 'Pérez'},
-            {'username': 'estudiante2', 'email': 'est2@example.com', 'first_name': 'María', 'last_name': 'García'},
-            {'username': 'estudiante3', 'email': 'est3@example.com', 'first_name': 'Carlos', 'last_name': 'López'},
-            {'username': 'profesor1', 'email': 'prof1@example.com', 'first_name': 'Ana', 'last_name': 'Martínez'},
-            {'username': 'admin1', 'email': 'admin@example.com', 'first_name': 'Pedro', 'last_name': 'Sánchez'},
+            {'username': 'estudiante1', 'email': 'est1@example.com',
+                'first_name': 'Juan', 'last_name': 'Pérez'},
+            {'username': 'estudiante2', 'email': 'est2@example.com',
+                'first_name': 'María', 'last_name': 'García'},
+            {'username': 'estudiante3', 'email': 'est3@example.com',
+                'first_name': 'Carlos', 'last_name': 'López'},
+            {'username': 'profesor1', 'email': 'prof1@example.com',
+                'first_name': 'Ana', 'last_name': 'Martínez'},
+            {'username': 'admin1', 'email': 'admin@example.com',
+                'first_name': 'Pedro', 'last_name': 'Sánchez'},
         ]
 
         for i in range(min(cantidad, len(usuarios_data))):
@@ -59,9 +64,12 @@ class SolicitudTestDataFactory:
                 'descripcion': 'Solicitud de constancia que acredita que el alumno está inscrito',
                 'responsable': '1',  # Control escolar
                 'campos': [
-                    {'nombre': 'motivo', 'etiqueta': 'Motivo de la solicitud', 'tipo': 'textarea', 'requerido': True},
-                    {'nombre': 'semestre', 'etiqueta': 'Semestre actual', 'tipo': 'select', 'opciones': '1,2,3,4,5,6,7,8,9', 'requerido': True},
-                    {'nombre': 'fecha_necesaria', 'etiqueta': 'Fecha en que necesita el documento', 'tipo': 'date', 'requerido': True},
+                    {'nombre': 'motivo', 'etiqueta': 'Motivo de la solicitud',
+                        'tipo': 'textarea', 'requerido': True},
+                    {'nombre': 'semestre', 'etiqueta': 'Semestre actual', 'tipo': 'select',
+                        'opciones': '1,2,3,4,5,6,7,8,9', 'requerido': True},
+                    {'nombre': 'fecha_necesaria', 'etiqueta': 'Fecha en que necesita el documento',
+                        'tipo': 'date', 'requerido': True},
                 ]
             },
             {
@@ -69,11 +77,16 @@ class SolicitudTestDataFactory:
                 'descripcion': 'Solicitud para cambiar de grupo en una materia',
                 'responsable': '2',  # Responsable de programa
                 'campos': [
-                    {'nombre': 'materia', 'etiqueta': 'Nombre de la materia', 'tipo': 'text', 'requerido': True},
-                    {'nombre': 'grupo_actual', 'etiqueta': 'Grupo actual', 'tipo': 'text', 'requerido': True},
-                    {'nombre': 'grupo_deseado', 'etiqueta': 'Grupo deseado', 'tipo': 'text', 'requerido': True},
-                    {'nombre': 'justificacion', 'etiqueta': 'Justificación', 'tipo': 'textarea', 'requerido': True},
-                    {'nombre': 'horario_actual', 'etiqueta': 'Horario actual', 'tipo': 'file', 'requerido': False},
+                    {'nombre': 'materia', 'etiqueta': 'Nombre de la materia',
+                        'tipo': 'text', 'requerido': True},
+                    {'nombre': 'grupo_actual', 'etiqueta': 'Grupo actual',
+                        'tipo': 'text', 'requerido': True},
+                    {'nombre': 'grupo_deseado', 'etiqueta': 'Grupo deseado',
+                        'tipo': 'text', 'requerido': True},
+                    {'nombre': 'justificacion', 'etiqueta': 'Justificación',
+                        'tipo': 'textarea', 'requerido': True},
+                    {'nombre': 'horario_actual', 'etiqueta': 'Horario actual',
+                        'tipo': 'file', 'requerido': False},
                 ]
             },
             {
@@ -81,10 +94,14 @@ class SolicitudTestDataFactory:
                 'descripcion': 'Solicitud de asesoría o tutoría académica',
                 'responsable': '3',  # Responsable de tutorías
                 'campos': [
-                    {'nombre': 'materia', 'etiqueta': 'Materia', 'tipo': 'text', 'requerido': True},
-                    {'nombre': 'tema', 'etiqueta': 'Tema específico', 'tipo': 'textarea', 'requerido': True},
-                    {'nombre': 'tipo_asesoria', 'etiqueta': 'Tipo de asesoría', 'tipo': 'select', 'opciones': 'Individual,Grupal,En línea,Presencial', 'requerido': True},
-                    {'nombre': 'disponibilidad', 'etiqueta': 'Disponibilidad horaria', 'tipo': 'textarea', 'requerido': True},
+                    {'nombre': 'materia', 'etiqueta': 'Materia',
+                        'tipo': 'text', 'requerido': True},
+                    {'nombre': 'tema', 'etiqueta': 'Tema específico',
+                        'tipo': 'textarea', 'requerido': True},
+                    {'nombre': 'tipo_asesoria', 'etiqueta': 'Tipo de asesoría', 'tipo': 'select',
+                        'opciones': 'Individual,Grupal,En línea,Presencial', 'requerido': True},
+                    {'nombre': 'disponibilidad', 'etiqueta': 'Disponibilidad horaria',
+                        'tipo': 'textarea', 'requerido': True},
                 ]
             },
             {
@@ -92,10 +109,14 @@ class SolicitudTestDataFactory:
                 'descripcion': 'Solicitud para dar de baja una materia',
                 'responsable': '4',  # Director
                 'campos': [
-                    {'nombre': 'materia', 'etiqueta': 'Nombre de la materia', 'tipo': 'text', 'requerido': True},
-                    {'nombre': 'grupo', 'etiqueta': 'Grupo', 'tipo': 'text', 'requerido': True},
-                    {'nombre': 'motivo', 'etiqueta': 'Motivo de la baja', 'tipo': 'textarea', 'requerido': True},
-                    {'nombre': 'documentos', 'etiqueta': 'Documentos de respaldo', 'tipo': 'file', 'requerido': False, 'cantidad_archivos': 3},
+                    {'nombre': 'materia', 'etiqueta': 'Nombre de la materia',
+                        'tipo': 'text', 'requerido': True},
+                    {'nombre': 'grupo', 'etiqueta': 'Grupo',
+                        'tipo': 'text', 'requerido': True},
+                    {'nombre': 'motivo', 'etiqueta': 'Motivo de la baja',
+                        'tipo': 'textarea', 'requerido': True},
+                    {'nombre': 'documentos', 'etiqueta': 'Documentos de respaldo',
+                        'tipo': 'file', 'requerido': False, 'cantidad_archivos': 3},
                 ]
             },
             {
@@ -103,10 +124,14 @@ class SolicitudTestDataFactory:
                 'descripcion': 'Solicitud de carta de recomendación',
                 'responsable': '2',  # Responsable de programa
                 'campos': [
-                    {'nombre': 'proposito', 'etiqueta': 'Propósito de la carta', 'tipo': 'select', 'opciones': 'Beca,Empleo,Intercambio,Maestría,Otro', 'requerido': True},
-                    {'nombre': 'destinatario', 'etiqueta': 'Destinatario', 'tipo': 'text', 'requerido': True},
-                    {'nombre': 'fecha_entrega', 'etiqueta': 'Fecha de entrega necesaria', 'tipo': 'date', 'requerido': True},
-                    {'nombre': 'informacion_adicional', 'etiqueta': 'Información adicional', 'tipo': 'textarea', 'requerido': False},
+                    {'nombre': 'proposito', 'etiqueta': 'Propósito de la carta', 'tipo': 'select',
+                        'opciones': 'Beca,Empleo,Intercambio,Maestría,Otro', 'requerido': True},
+                    {'nombre': 'destinatario', 'etiqueta': 'Destinatario',
+                        'tipo': 'text', 'requerido': True},
+                    {'nombre': 'fecha_entrega', 'etiqueta': 'Fecha de entrega necesaria',
+                        'tipo': 'date', 'requerido': True},
+                    {'nombre': 'informacion_adicional', 'etiqueta': 'Información adicional',
+                        'tipo': 'textarea', 'requerido': False},
                 ]
             },
         ]
@@ -143,7 +168,8 @@ class SolicitudTestDataFactory:
                         tipo=campo_data['tipo'],
                         requerido=campo_data['requerido'],
                         opciones=campo_data.get('opciones', ''),
-                        cantidad_archivos=campo_data.get('cantidad_archivos', 1),
+                        cantidad_archivos=campo_data.get(
+                            'cantidad_archivos', 1),
                         orden=i + 1
                     )
 
@@ -168,7 +194,8 @@ class SolicitudTestDataFactory:
         if tipo_archivo in contenidos:
             contenido = contenidos[tipo_archivo]
         else:
-            contenido = f'Archivo de prueba: {nombre_archivo}\n'.encode('utf-8')
+            contenido = f'Archivo de prueba: {nombre_archivo}\n'.encode(
+                'utf-8')
 
         if isinstance(contenido, str):
             contenido = contenido.encode('utf-8')
@@ -281,7 +308,8 @@ class SolicitudTestDataFactory:
                     )
 
                     # Crear archivos adjuntos (algunos formularios permiten múltiples archivos)
-                    cantidad_archivos = random.randint(1, min(campo.cantidad_archivos, 3))
+                    cantidad_archivos = random.randint(
+                        1, min(campo.cantidad_archivos, 3))
                     tipos_archivo = ['pdf', 'txt', 'jpg']
                     extensiones = {'pdf': 'pdf', 'txt': 'txt', 'jpg': 'jpg'}
 
@@ -290,14 +318,16 @@ class SolicitudTestDataFactory:
                         ext = extensiones[tipo_elegido]
                         nombre_archivo = f'{campo.nombre}_{j+1}.{ext}'
 
-                        archivo_content = self.crear_archivo_prueba(nombre_archivo, tipo_elegido)
+                        archivo_content = self.crear_archivo_prueba(
+                            nombre_archivo, tipo_elegido)
 
                         archivo_adjunto = ArchivoAdjunto.objects.create(
                             solicitud=solicitud,
                             respuesta=respuesta_campo,
                             nombre=nombre_archivo
                         )
-                        archivo_adjunto.archivo.save(nombre_archivo, archivo_content, save=True)
+                        archivo_adjunto.archivo.save(
+                            nombre_archivo, archivo_content, save=True)
 
             # Crear seguimiento inicial
             SeguimientoSolicitud.objects.create(
